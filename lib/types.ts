@@ -54,6 +54,8 @@ export interface Artwork {
   lng: number | null;
   image_url: string | null;
   description: string;
+  medium: string;
+  dimensions: string;
   wikidata_id: string | null;
   created_at: string;
   updated_at: string;

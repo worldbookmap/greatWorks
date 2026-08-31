@@ -36,6 +36,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     'lng',
     'image_url',
     'description',
+    'medium',
+    'dimensions',
     'wikidata_id',
   ] as const) {
     if (key in body) updates[key] = body[key];

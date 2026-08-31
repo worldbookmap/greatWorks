@@ -37,6 +37,8 @@ export async function POST(request: NextRequest) {
     lng,
     image_url,
     description,
+    medium,
+    dimensions,
     wikidata_id,
   } = body ?? {};
 
@@ -58,6 +60,8 @@ export async function POST(request: NextRequest) {
       lng: typeof lng === 'number' ? lng : null,
       image_url: image_url ?? null,
       description: description ?? '',
+      medium: medium ?? '',
+      dimensions: dimensions ?? '',
       wikidata_id: wikidata_id ?? null,
     })
     .select('*, artist:artists(*)')

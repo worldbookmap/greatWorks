@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
-import { ImageOff } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import type { Artwork } from '@/lib/types';
 import { ArtworkModal } from '@/components/artworks/ArtworkModal';
+import { ArtworkDetailModal } from '@/components/artworks/ArtworkDetailModal';
 
 // Default Leaflet marker icons reference asset paths that break under bundlers;
 // point them at the CDN copies instead of shipping/aliasing the PNGs ourselves.
@@ -15,9 +16,17 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
+interface ArtworkPoint {
+  key: string;
+  lat: number;
+  lng: number;
+  artworks: Artwork[];
+}
+
 export function ArtMapView() {
   const [artworks, setArtworks] = useState<Artwork[]>([]);
-  const [openArtworkId, setOpenArtworkId] = useState<string | null>(null);
+  const [detailArtworkId, setDetailArtworkId] = useState<string | null>(null);
+  const [editArtworkId, setEditArtworkId] = useState<string | null>(null);
 
   const loadArtworks = async () => {
     const res = await fetch('/api/artworks');
@@ -30,6 +39,18 @@ export function ArtMapView() {
 
   const located = artworks.filter((a) => a.lat != null && a.lng != null);
 
+  // 같은 위치(소장처)의 작품을 하나의 포인트로 묶습니다.
+  const points: ArtworkPoint[] = useMemo(() => {
+    const map = new Map<string, ArtworkPoint>();
+    for (const art of located) {
+      const key = `${(art.lat as number).toFixed(3)},${(art.lng as number).toFixed(3)}`;
+      const existing = map.get(key);
+      if (existing) existing.artworks.push(art);
+      else map.set(key, { key, lat: art.lat as number, lng: art.lng as number, artworks: [art] });
+    }
+    return Array.from(map.values());
+  }, [located]);
+
   return (
     <div className="relative flex-1">
       <MapContainer center={[30, 10]} zoom={3} className="absolute inset-0">
@@ -37,30 +58,26 @@ export function ArtMapView() {
           attribution="Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ"
           url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
         />
-        {located.map((art) => (
-          <Marker key={art.id} position={[art.lat as number, art.lng as number]}>
+        {points.map((point) => (
+          <Marker key={point.key} position={[point.lat, point.lng]}>
             <Popup>
-              <div className="w-44">
-                <div className="mb-2 flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg bg-black/[0.04]">
-                  {art.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={art.image_url} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <ImageOff className="h-5 w-5 text-[#c9beae]" strokeWidth={1.5} />
-                  )}
-                </div>
-                <p className="truncate text-[13px] font-semibold text-[#2a231c]">{art.title}</p>
-                <p className="truncate text-[11.5px] text-[#8a8074]">
-                  {art.artist?.name ?? '작가 미상'}
-                  {art.year != null && ` · ${art.year}`}
+              <div className="w-56">
+                <p className="mb-1.5 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-[#8a8074]">
+                  <MapPin className="h-3 w-3" strokeWidth={2.25} />
+                  이 위치의 작품 ({point.artworks.length})
                 </p>
-                {art.collection_name && <p className="mt-0.5 truncate text-[11px] text-[#a39a8d]">{art.collection_name}</p>}
-                <button
-                  onClick={() => setOpenArtworkId(art.id)}
-                  className="mt-2 w-full rounded-lg bg-gradient-to-b from-accent to-accent-strong py-1.5 text-[12px] font-medium text-white"
-                >
-                  자세히 보기
-                </button>
+                <ul className="max-h-56 space-y-0.5 overflow-y-auto">
+                  {point.artworks.map((art) => (
+                    <li key={art.id}>
+                      <button
+                        onClick={() => setDetailArtworkId(art.id)}
+                        className="block w-full truncate rounded-lg px-2 py-1.5 text-left text-[12.5px] text-[#2a231c] transition-colors hover:bg-accent/10"
+                      >
+                        {art.title}, {art.artist?.name ?? '작가 미상'}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </Popup>
           </Marker>
@@ -75,14 +92,29 @@ export function ArtMapView() {
         </div>
       )}
 
-      {openArtworkId && (
+      {detailArtworkId && (
+        <ArtworkDetailModal
+          artworkId={detailArtworkId}
+          onClose={() => setDetailArtworkId(null)}
+          onEdit={() => {
+            setEditArtworkId(detailArtworkId);
+            setDetailArtworkId(null);
+          }}
+          onDeleted={() => {
+            loadArtworks();
+            setDetailArtworkId(null);
+          }}
+        />
+      )}
+
+      {editArtworkId && (
         <ArtworkModal
-          artworkId={openArtworkId}
-          onClose={() => setOpenArtworkId(null)}
+          artworkId={editArtworkId}
+          onClose={() => setEditArtworkId(null)}
           onSaved={() => loadArtworks()}
           onDeleted={() => {
             loadArtworks();
-            setOpenArtworkId(null);
+            setEditArtworkId(null);
           }}
         />
       )}

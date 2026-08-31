@@ -20,6 +20,18 @@ interface WikidataCoordinateValue {
   latitude: number;
   longitude: number;
 }
+interface WikidataQuantityValue {
+  amount: string;
+  unit?: string;
+}
+
+// 자주 쓰이는 단위 QID → 짧은 표기
+const UNIT_ABBR: Record<string, string> = {
+  Q174728: 'cm',
+  Q11573: 'm',
+  Q218593: 'in',
+  Q3710: 'mm',
+};
 interface WikidataSnak {
   mainsnak?: { datavalue?: { value: unknown } };
 }
@@ -83,6 +95,22 @@ function entityIdOf(claims: WikidataClaims | undefined, prop: string): string | 
   return null;
 }
 
+function allEntityIdsOf(claims: WikidataClaims | undefined, prop: string): string[] {
+  return (claims?.[prop] ?? [])
+    .map((snak) => snak.mainsnak?.datavalue?.value)
+    .filter((v): v is WikidataEntityIdValue => !!v && typeof v === 'object' && 'id' in v)
+    .map((v) => v.id);
+}
+
+function quantityOf(claims: WikidataClaims | undefined, prop: string): { amount: number; unitId: string | null } | null {
+  const v = firstValue(claims, prop);
+  if (!v || typeof v !== 'object' || !('amount' in v)) return null;
+  const q = v as WikidataQuantityValue;
+  const amount = Number(q.amount.replace('+', ''));
+  const unitId = q.unit && q.unit !== '1' ? (q.unit.split('/').pop() ?? null) : null;
+  return { amount, unitId };
+}
+
 function yearOf(claims: WikidataClaims | undefined, prop: string): number | null {
   const v = firstValue(claims, prop);
   if (!v || typeof v !== 'object' || !('time' in v)) return null;
@@ -112,9 +140,12 @@ export interface WikidataArtworkDetail {
   lat: number | null;
   lng: number | null;
   imageUrl: string | null;
+  medium: string;
+  dimensions: string;
 }
 
-// P170 creator, P571 inception, P276 location / P195 collection, P625 coordinate, P18 image
+// P170 creator, P571 inception, P276 location / P195 collection, P625 coordinate, P18 image,
+// P186 material used, P2048 height / P2049 width
 export async function getArtworkDetail(qid: string): Promise<WikidataArtworkDetail> {
   const entities = await getEntities([qid]);
   const entity = entities[qid];
@@ -122,9 +153,27 @@ export async function getArtworkDetail(qid: string): Promise<WikidataArtworkDeta
 
   const creatorId = entityIdOf(claims, 'P170');
   const collectionId = entityIdOf(claims, 'P276') ?? entityIdOf(claims, 'P195');
-  const refs = await getEntities([creatorId, collectionId].filter((v): v is string => !!v));
+  const materialIds = allEntityIdsOf(claims, 'P186');
+  const heightQ = quantityOf(claims, 'P2048');
+  const widthQ = quantityOf(claims, 'P2049');
+
+  const refIds = [creatorId, collectionId, ...materialIds, heightQ?.unitId, widthQ?.unitId].filter(
+    (v): v is string => !!v
+  );
+  const refs = await getEntities(refIds);
 
   const collectionEntity = collectionId ? refs[collectionId] : undefined;
+  const medium = materialIds.map((id) => labelOf(refs[id])).filter(Boolean).join(', ');
+
+  let dimensions = '';
+  if (widthQ && heightQ) {
+    const unitId = heightQ.unitId ?? widthQ.unitId;
+    const unitLabel = unitId ? (UNIT_ABBR[unitId] ?? labelOf(refs[unitId])) : '';
+    dimensions = `${widthQ.amount} × ${heightQ.amount}${unitLabel ? ` ${unitLabel}` : ''}`;
+  } else if (heightQ) {
+    const unitLabel = heightQ.unitId ? (UNIT_ABBR[heightQ.unitId] ?? labelOf(refs[heightQ.unitId])) : '';
+    dimensions = `${heightQ.amount}${unitLabel ? ` ${unitLabel}` : ''}`;
+  }
 
   return {
     wikidataId: qid,
@@ -134,6 +183,8 @@ export async function getArtworkDetail(qid: string): Promise<WikidataArtworkDeta
     collectionName: collectionId ? labelOf(collectionEntity) : '',
     ...(coordinateOf(collectionEntity?.claims, 'P625') ?? { lat: null, lng: null }),
     imageUrl: imageUrlOf(claims),
+    medium,
+    dimensions,
   };
 }
 

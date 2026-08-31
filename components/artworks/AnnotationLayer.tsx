@@ -7,17 +7,19 @@ import type { Annotation } from '@/lib/types';
 interface AnnotationLayerProps {
   imageUrl: string;
   annotations: Annotation[];
-  onAdd: (xPct: number, yPct: number, text: string) => Promise<void>;
-  onDelete: (id: string) => void;
+  onAdd?: (xPct: number, yPct: number, text: string) => Promise<void>;
+  onDelete?: (id: string) => void;
+  readOnly?: boolean;
 }
 
-export function AnnotationLayer({ imageUrl, annotations, onAdd, onDelete }: AnnotationLayerProps) {
+export function AnnotationLayer({ imageUrl, annotations, onAdd, onDelete, readOnly = false }: AnnotationLayerProps) {
   const [pendingPos, setPendingPos] = useState<{ x: number; y: number } | null>(null);
   const [pendingText, setPendingText] = useState('');
   const [saving, setSaving] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
 
   function handleImageClick(e: React.MouseEvent<HTMLImageElement>) {
+    if (readOnly || !onAdd) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
@@ -27,7 +29,7 @@ export function AnnotationLayer({ imageUrl, annotations, onAdd, onDelete }: Anno
   }
 
   async function handleSavePending() {
-    if (!pendingPos || !pendingText.trim()) return;
+    if (!pendingPos || !pendingText.trim() || !onAdd) return;
     setSaving(true);
     try {
       await onAdd(pendingPos.x, pendingPos.y, pendingText.trim());
@@ -45,7 +47,7 @@ export function AnnotationLayer({ imageUrl, annotations, onAdd, onDelete }: Anno
         src={imageUrl}
         alt=""
         onClick={handleImageClick}
-        className="block w-full cursor-crosshair select-none"
+        className={`block w-full select-none ${readOnly ? '' : 'cursor-crosshair'}`}
         draggable={false}
       />
 
@@ -69,15 +71,17 @@ export function AnnotationLayer({ imageUrl, annotations, onAdd, onDelete }: Anno
             <div className="absolute top-8 left-1/2 z-10 w-56 -translate-x-1/2 rounded-xl border border-black/[0.08] bg-surface p-3 text-left shadow-2xl shadow-black/20">
               <div className="mb-2 flex items-start justify-between gap-2">
                 <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-[#2a231c]">{a.text}</p>
-                <button
-                  onClick={() => {
-                    onDelete(a.id);
-                    setOpenId(null);
-                  }}
-                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-red-500/70 transition-colors hover:bg-red-500/10 hover:text-red-500"
-                >
-                  <Trash2 className="h-3 w-3" strokeWidth={2.25} />
-                </button>
+                {!readOnly && onDelete && (
+                  <button
+                    onClick={() => {
+                      onDelete(a.id);
+                      setOpenId(null);
+                    }}
+                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-red-500/70 transition-colors hover:bg-red-500/10 hover:text-red-500"
+                  >
+                    <Trash2 className="h-3 w-3" strokeWidth={2.25} />
+                  </button>
+                )}
               </div>
             </div>
           )}

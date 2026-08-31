@@ -5,9 +5,11 @@ import {
   BookImage,
   Building2,
   CalendarClock,
+  Layers,
   Loader2,
   MapPinned,
   Palette,
+  Ruler,
   Save,
   Search,
   Sparkles,
@@ -45,6 +47,8 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
   const [lng, setLng] = useState<number | null>(null);
   const [imageUrl, setImageUrl] = useState('');
   const [description, setDescription] = useState('');
+  const [medium, setMedium] = useState('');
+  const [dimensions, setDimensions] = useState('');
   const [wikidataId, setWikidataId] = useState('');
 
   const [artists, setArtists] = useState<Artist[]>([]);
@@ -89,6 +93,8 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
         setLng(data.lng);
         setImageUrl(data.image_url ?? '');
         setDescription(data.description ?? '');
+        setMedium(data.medium ?? '');
+        setDimensions(data.dimensions ?? '');
         setWikidataId(data.wikidata_id ?? '');
         setAnnotations(data.annotations ?? []);
       }
@@ -124,6 +130,8 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
       setLat(detail.lat);
       setLng(detail.lng);
       if (detail.imageUrl) setImageUrl(detail.imageUrl);
+      if (detail.medium) setMedium(detail.medium);
+      if (detail.dimensions) setDimensions(detail.dimensions);
       setWikidataId(detail.wikidataId);
 
       if (detail.artistName) {
@@ -225,6 +233,8 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
       lng,
       image_url: imageUrl || null,
       description,
+      medium,
+      dimensions,
       wikidata_id: wikidataId || null,
     };
     try {
@@ -394,6 +404,23 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
                   이미지 URL
                 </label>
                 <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} className={inputClass} placeholder="https://..." />
+              </div>
+
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className={labelClass}>
+                    <Layers className="h-3.5 w-3.5 text-[#8a8074]" strokeWidth={2.25} />
+                    재료 / 기법
+                  </label>
+                  <input value={medium} onChange={(e) => setMedium(e.target.value)} className={inputClass} placeholder="예: 캔버스에 유채" />
+                </div>
+                <div className="w-40">
+                  <label className={labelClass}>
+                    <Ruler className="h-3.5 w-3.5 text-[#8a8074]" strokeWidth={2.25} />
+                    크기
+                  </label>
+                  <input value={dimensions} onChange={(e) => setDimensions(e.target.value)} className={inputClass} placeholder="예: 73.7 × 92.1 cm" />
+                </div>
               </div>
 
               <div>

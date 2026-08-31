@@ -38,10 +38,16 @@ create table if not exists artworks (
   lng double precision,
   image_url text,
   description text not null default '',
+  medium text not null default '', -- 재료/기법 (예: 캔버스에 유채)
+  dimensions text not null default '', -- 크기 (예: 73.7 × 92.1 cm)
   wikidata_id text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- 기존에 만든 테이블에도 반영되도록 (이미 있으면 무시됨)
+alter table artworks add column if not exists medium text not null default '';
+alter table artworks add column if not exists dimensions text not null default '';
 
 create table if not exists annotations (
   id uuid primary key default gen_random_uuid(),
