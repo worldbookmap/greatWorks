@@ -5,6 +5,7 @@ create extension if not exists pgcrypto;
 create table if not exists artists (
   id uuid primary key default gen_random_uuid(),
   name text not null,
+  name_en text not null default '', -- 영문 이름
   bio text not null default '',
   birth_year integer,
   death_year integer,
@@ -28,10 +29,12 @@ create table if not exists artist_relationships (
 create table if not exists artworks (
   id uuid primary key default gen_random_uuid(),
   title text not null,
+  title_en text not null default '', -- 영문 작품명
   artist_id uuid references artists(id) on delete set null,
   year integer,
   year_display text not null default '', -- "c. 1503" 같은 비정형 표기용
   collection_name text not null default '', -- 소장처(예: 루브르 박물관)
+  collection_name_en text not null default '', -- 영문 소장처
   collection_country text not null default '',
   collection_city text not null default '',
   lat double precision,
@@ -39,6 +42,7 @@ create table if not exists artworks (
   image_url text,
   description text not null default '',
   medium text not null default '', -- 재료/기법 (예: 캔버스에 유채)
+  medium_en text not null default '', -- 영문 재료/기법
   dimensions text not null default '', -- 크기 (예: 73.7 × 92.1 cm)
   wikidata_id text,
   created_at timestamptz not null default now(),
@@ -48,6 +52,10 @@ create table if not exists artworks (
 -- 기존에 만든 테이블에도 반영되도록 (이미 있으면 무시됨)
 alter table artworks add column if not exists medium text not null default '';
 alter table artworks add column if not exists dimensions text not null default '';
+alter table artworks add column if not exists title_en text not null default '';
+alter table artworks add column if not exists collection_name_en text not null default '';
+alter table artworks add column if not exists medium_en text not null default '';
+alter table artists add column if not exists name_en text not null default '';
 
 create table if not exists annotations (
   id uuid primary key default gen_random_uuid(),

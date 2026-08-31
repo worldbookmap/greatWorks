@@ -4,12 +4,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { ImageOff, Palette, Plus, Search } from 'lucide-react';
 import type { Artwork } from '@/lib/types';
 import { ArtworkModal } from './ArtworkModal';
+import { ArtworkDetailModal } from './ArtworkDetailModal';
 
 export function ArtworksView() {
   const [artworks, setArtworks] = useState<Artwork[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
-  const [modalState, setModalState] = useState<{ artworkId?: string } | null>(null);
+  const [detailArtworkId, setDetailArtworkId] = useState<string | null>(null);
+  const [editState, setEditState] = useState<{ artworkId?: string } | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch('/api/artworks' + (search ? `?q=${encodeURIComponent(search)}` : ''));
@@ -33,7 +35,7 @@ export function ArtworksView() {
           />
         </div>
         <button
-          onClick={() => setModalState({})}
+          onClick={() => setEditState({})}
           className="flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent to-accent-strong px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent/25 transition-opacity hover:opacity-90"
         >
           <Plus className="h-4 w-4" strokeWidth={2.25} />
@@ -51,7 +53,7 @@ export function ArtworksView() {
           {artworks.map((art) => (
             <button
               key={art.id}
-              onClick={() => setModalState({ artworkId: art.id })}
+              onClick={() => setDetailArtworkId(art.id)}
               className="group flex flex-col overflow-hidden rounded-2xl border border-black/[0.07] bg-surface text-left shadow-sm shadow-black/[0.03] transition-shadow hover:shadow-lg hover:shadow-black/[0.08]"
             >
               <div className="flex aspect-[4/5] items-center justify-center overflow-hidden bg-black/[0.03]">
@@ -78,16 +80,31 @@ export function ArtworksView() {
         </div>
       )}
 
-      {modalState && (
+      {detailArtworkId && (
+        <ArtworkDetailModal
+          artworkId={detailArtworkId}
+          onClose={() => setDetailArtworkId(null)}
+          onEdit={() => {
+            setEditState({ artworkId: detailArtworkId });
+            setDetailArtworkId(null);
+          }}
+          onDeleted={() => {
+            load();
+            setDetailArtworkId(null);
+          }}
+        />
+      )}
+
+      {editState && (
         <ArtworkModal
-          artworkId={modalState.artworkId}
-          onClose={() => setModalState(null)}
+          artworkId={editState.artworkId}
+          onClose={() => setEditState(null)}
           onSaved={() => {
             load();
           }}
           onDeleted={() => {
             load();
-            setModalState(null);
+            setEditState(null);
           }}
         />
       )}

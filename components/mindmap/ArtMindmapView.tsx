@@ -20,7 +20,9 @@ import dagre from '@dagrejs/dagre';
 import { Palette, Search, User, Waypoints } from 'lucide-react';
 import type { MindmapEdge, MindmapNode } from '@/lib/types';
 import { ArtworkModal } from '@/components/artworks/ArtworkModal';
+import { ArtworkDetailModal } from '@/components/artworks/ArtworkDetailModal';
 import { ArtistModal } from '@/components/artists/ArtistModal';
+import { ArtistDetailModal } from '@/components/artists/ArtistDetailModal';
 
 const NODE_STYLE: Record<MindmapNode['type'], { icon: typeof User; color: string; ring: string; bg: string }> = {
   artist: { icon: User, color: '#0fb5a8', ring: 'rgba(15,181,168,0.4)', bg: 'rgba(15,181,168,0.08)' },
@@ -86,6 +88,7 @@ export function ArtMindmapView() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [activeNode, setActiveNode] = useState<ActiveNode | null>(null);
+  const [editNode, setEditNode] = useState<ActiveNode | null>(null);
   const [positionedNodes, setPositionedNodes] = useState<Node[]>([]);
 
   async function refetchMindmap() {
@@ -142,6 +145,10 @@ export function ArtMindmapView() {
 
   function closePanel() {
     setActiveNode(null);
+  }
+
+  function closeEditPanel() {
+    setEditNode(null);
   }
 
   if (loading) {
@@ -209,10 +216,13 @@ export function ArtMindmapView() {
       </div>
 
       {activeNode?.type === 'artist' && (
-        <ArtistModal
+        <ArtistDetailModal
           artistId={activeNode.id}
           onClose={closePanel}
-          onSaved={refetchMindmap}
+          onEdit={() => {
+            setEditNode(activeNode);
+            closePanel();
+          }}
           onDeleted={() => {
             refetchMindmap();
             closePanel();
@@ -222,13 +232,41 @@ export function ArtMindmapView() {
       )}
 
       {activeNode?.type === 'artwork' && (
-        <ArtworkModal
+        <ArtworkDetailModal
           artworkId={activeNode.id}
           onClose={closePanel}
-          onSaved={refetchMindmap}
+          onEdit={() => {
+            setEditNode(activeNode);
+            closePanel();
+          }}
           onDeleted={() => {
             refetchMindmap();
             closePanel();
+          }}
+        />
+      )}
+
+      {editNode?.type === 'artist' && (
+        <ArtistModal
+          artistId={editNode.id}
+          onClose={closeEditPanel}
+          onSaved={refetchMindmap}
+          onDeleted={() => {
+            refetchMindmap();
+            closeEditPanel();
+          }}
+          onOpenArtwork={(artworkId) => setActiveNode({ type: 'artwork', id: artworkId })}
+        />
+      )}
+
+      {editNode?.type === 'artwork' && (
+        <ArtworkModal
+          artworkId={editNode.id}
+          onClose={closeEditPanel}
+          onSaved={refetchMindmap}
+          onDeleted={() => {
+            refetchMindmap();
+            closeEditPanel();
           }}
         />
       )}

@@ -1,6 +1,7 @@
 export interface Artist {
   id: string;
   name: string;
+  name_en: string;
   bio: string;
   birth_year: number | null;
   death_year: number | null;
@@ -44,10 +45,12 @@ export interface ArtistRelationship {
 export interface Artwork {
   id: string;
   title: string;
+  title_en: string;
   artist_id: string | null;
   year: number | null;
   year_display: string;
   collection_name: string;
+  collection_name_en: string;
   collection_country: string;
   collection_city: string;
   lat: number | null;
@@ -55,6 +58,7 @@ export interface Artwork {
   image_url: string | null;
   description: string;
   medium: string;
+  medium_en: string;
   dimensions: string;
   wikidata_id: string | null;
   created_at: string;

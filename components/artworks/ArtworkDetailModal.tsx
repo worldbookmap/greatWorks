@@ -12,10 +12,15 @@ interface ArtworkDetailModalProps {
   onDeleted: () => void;
 }
 
-function formatYear(year: number | null, yearDisplay: string) {
+function formatYear(year: number | null, yearDisplay: string, lang: 'en' | 'ko') {
   if (yearDisplay) return yearDisplay;
   if (year == null) return '';
+  if (lang === 'en') return year < 0 ? `${-year} BCE` : `${year}`;
   return year < 0 ? `기원전 ${-year}년` : `${year}년`;
+}
+
+function buildLine(parts: (string | undefined | null)[]) {
+  return parts.filter((p): p is string => !!p && p.trim().length > 0).join(', ');
 }
 
 export function ArtworkDetailModal({ artworkId, onClose, onEdit, onDeleted }: ArtworkDetailModalProps) {
@@ -36,18 +41,39 @@ export function ArtworkDetailModal({ artworkId, onClose, onEdit, onDeleted }: Ar
     if (res.ok) onDeleted();
   }
 
-  const infoLine = artwork
-    ? [
-        artwork.artist?.name ?? '작가 미상',
+  // 영문 표기 데이터가 실제로 하나라도 있을 때만 영/한 두 줄로 보여줍니다.
+  // 없으면(기존 데이터 등) 저장된 값 그대로 한 줄만 보여줍니다.
+  const hasEnglishData = !!(
+    artwork?.title_en ||
+    artwork?.artist?.name_en ||
+    artwork?.medium_en ||
+    artwork?.collection_name_en
+  );
+
+  const enLine = artwork
+    ? buildLine([
+        artwork.artist?.name_en || artwork.artist?.name || 'Unknown artist',
+        `<${artwork.title_en || artwork.title}>`,
+        formatYear(artwork.year, artwork.year_display, 'en'),
+        artwork.medium_en || artwork.medium,
+        artwork.dimensions,
+        artwork.collection_name_en || artwork.collection_name,
+      ])
+    : '';
+
+  const koLine = artwork
+    ? buildLine([
+        artwork.artist?.name || '작가 미상',
         `<${artwork.title}>`,
-        formatYear(artwork.year, artwork.year_display),
+        formatYear(artwork.year, artwork.year_display, 'ko'),
         artwork.medium,
         artwork.dimensions,
         artwork.collection_name,
-      ]
-        .filter(Boolean)
-        .join(', ')
+      ])
     : '';
+
+  const primaryLine = hasEnglishData ? enLine : koLine;
+  const showSecondLine = hasEnglishData && koLine && koLine !== enLine;
 
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
@@ -78,7 +104,10 @@ export function ArtworkDetailModal({ artworkId, onClose, onEdit, onDeleted }: Ar
                 </div>
               )}
 
-              <p className="text-[14px] leading-relaxed text-[#2a231c]">{infoLine}</p>
+              <div className="space-y-0.5">
+                <p className="text-[14px] leading-relaxed text-[#2a231c]">{primaryLine}</p>
+                {showSecondLine && <p className="text-[13px] leading-relaxed text-[#6b6258]">{koLine}</p>}
+              </div>
 
               {artwork.description && (
                 <p className="whitespace-pre-wrap rounded-xl bg-black/[0.02] p-3 text-[13px] leading-relaxed text-[#4a4038]">

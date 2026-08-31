@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
-  const { name, bio, birth_year, death_year, nationality, movement, image_url, wikidata_id } = body ?? {};
+  const { name, name_en, bio, birth_year, death_year, nationality, movement, image_url, wikidata_id } = body ?? {};
 
   if (typeof name !== 'string' || !name.trim()) {
     return NextResponse.json({ error: 'name은 필수입니다.' }, { status: 400 });
@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
     .from('artists')
     .insert({
       name,
+      name_en: name_en ?? '',
       bio: bio ?? '',
       birth_year: typeof birth_year === 'number' ? birth_year : null,
       death_year: typeof death_year === 'number' ? death_year : null,

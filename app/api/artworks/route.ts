@@ -27,10 +27,12 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const {
     title,
+    title_en,
     artist_id,
     year,
     year_display,
     collection_name,
+    collection_name_en,
     collection_country,
     collection_city,
     lat,
@@ -38,6 +40,7 @@ export async function POST(request: NextRequest) {
     image_url,
     description,
     medium,
+    medium_en,
     dimensions,
     wikidata_id,
   } = body ?? {};
@@ -50,10 +53,12 @@ export async function POST(request: NextRequest) {
     .from('artworks')
     .insert({
       title,
+      title_en: title_en ?? '',
       artist_id: artist_id || null,
       year: typeof year === 'number' ? year : null,
       year_display: year_display ?? '',
       collection_name: collection_name ?? '',
+      collection_name_en: collection_name_en ?? '',
       collection_country: collection_country ?? '',
       collection_city: collection_city ?? '',
       lat: typeof lat === 'number' ? lat : null,
@@ -61,6 +66,7 @@ export async function POST(request: NextRequest) {
       image_url: image_url ?? null,
       description: description ?? '',
       medium: medium ?? '',
+      medium_en: medium_en ?? '',
       dimensions: dimensions ?? '',
       wikidata_id: wikidata_id ?? null,
     })

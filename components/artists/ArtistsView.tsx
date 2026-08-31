@@ -4,14 +4,18 @@ import { useCallback, useEffect, useState } from 'react';
 import { ImageOff, Plus, Search, User } from 'lucide-react';
 import type { Artist } from '@/lib/types';
 import { ArtworkModal } from '@/components/artworks/ArtworkModal';
+import { ArtworkDetailModal } from '@/components/artworks/ArtworkDetailModal';
 import { ArtistModal } from './ArtistModal';
+import { ArtistDetailModal } from './ArtistDetailModal';
 
 export function ArtistsView() {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
-  const [artistModalState, setArtistModalState] = useState<{ artistId?: string } | null>(null);
-  const [artworkModalId, setArtworkModalId] = useState<string | null>(null);
+  const [detailArtistId, setDetailArtistId] = useState<string | null>(null);
+  const [editArtistState, setEditArtistState] = useState<{ artistId?: string } | null>(null);
+  const [detailArtworkId, setDetailArtworkId] = useState<string | null>(null);
+  const [editArtworkId, setEditArtworkId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch('/api/artists' + (search ? `?q=${encodeURIComponent(search)}` : ''));
@@ -40,7 +44,7 @@ export function ArtistsView() {
           />
         </div>
         <button
-          onClick={() => setArtistModalState({})}
+          onClick={() => setEditArtistState({})}
           className="flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent to-accent-strong px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent/25 transition-opacity hover:opacity-90"
         >
           <Plus className="h-4 w-4" strokeWidth={2.25} />
@@ -58,7 +62,7 @@ export function ArtistsView() {
           {artists.map((a) => (
             <button
               key={a.id}
-              onClick={() => setArtistModalState({ artistId: a.id })}
+              onClick={() => setDetailArtistId(a.id)}
               className="flex flex-col items-center gap-2.5 rounded-2xl border border-black/[0.07] bg-surface p-4 text-center shadow-sm shadow-black/[0.03] transition-shadow hover:shadow-lg hover:shadow-black/[0.08]"
             >
               {a.image_url ? (
@@ -85,25 +89,53 @@ export function ArtistsView() {
         </div>
       )}
 
-      {artistModalState && (
-        <ArtistModal
-          artistId={artistModalState.artistId}
-          onClose={() => setArtistModalState(null)}
-          onSaved={() => load()}
+      {detailArtistId && (
+        <ArtistDetailModal
+          artistId={detailArtistId}
+          onClose={() => setDetailArtistId(null)}
+          onEdit={() => {
+            setEditArtistState({ artistId: detailArtistId });
+            setDetailArtistId(null);
+          }}
           onDeleted={() => {
             load();
-            setArtistModalState(null);
+            setDetailArtistId(null);
           }}
-          onOpenArtwork={(artworkId) => setArtworkModalId(artworkId)}
+          onOpenArtwork={(artworkId) => setDetailArtworkId(artworkId)}
         />
       )}
 
-      {artworkModalId && (
+      {editArtistState && (
+        <ArtistModal
+          artistId={editArtistState.artistId}
+          onClose={() => setEditArtistState(null)}
+          onSaved={() => load()}
+          onDeleted={() => {
+            load();
+            setEditArtistState(null);
+          }}
+          onOpenArtwork={(artworkId) => setDetailArtworkId(artworkId)}
+        />
+      )}
+
+      {detailArtworkId && (
+        <ArtworkDetailModal
+          artworkId={detailArtworkId}
+          onClose={() => setDetailArtworkId(null)}
+          onEdit={() => {
+            setEditArtworkId(detailArtworkId);
+            setDetailArtworkId(null);
+          }}
+          onDeleted={() => setDetailArtworkId(null)}
+        />
+      )}
+
+      {editArtworkId && (
         <ArtworkModal
-          artworkId={artworkModalId}
-          onClose={() => setArtworkModalId(null)}
+          artworkId={editArtworkId}
+          onClose={() => setEditArtworkId(null)}
           onSaved={() => {}}
-          onDeleted={() => setArtworkModalId(null)}
+          onDeleted={() => setEditArtworkId(null)}
         />
       )}
     </div>

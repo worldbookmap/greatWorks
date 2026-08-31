@@ -26,10 +26,12 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const updates: Record<string, unknown> = {};
   for (const key of [
     'title',
+    'title_en',
     'artist_id',
     'year',
     'year_display',
     'collection_name',
+    'collection_name_en',
     'collection_country',
     'collection_city',
     'lat',
@@ -37,6 +39,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     'image_url',
     'description',
     'medium',
+    'medium_en',
     'dimensions',
     'wikidata_id',
   ] as const) {

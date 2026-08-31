@@ -81,6 +81,11 @@ function labelOf(entity: WikidataEntity | undefined): string {
   return entity?.labels?.ko?.value ?? entity?.labels?.en?.value ?? entity?.id ?? '';
 }
 
+// 영문 표기 전용 (한글로 폴백하지 않음) — 상세보기에서 영/한 병기에 사용
+function labelEnOf(entity: WikidataEntity | undefined): string {
+  return entity?.labels?.en?.value ?? '';
+}
+
 function descriptionOf(entity: WikidataEntity | undefined): string {
   return entity?.descriptions?.ko?.value ?? entity?.descriptions?.en?.value ?? '';
 }
@@ -134,13 +139,17 @@ function imageUrlOf(claims: WikidataClaims | undefined, prop = 'P18'): string | 
 export interface WikidataArtworkDetail {
   wikidataId: string;
   title: string;
+  titleEn: string;
   artistName: string;
+  artistNameEn: string;
   year: number | null;
   collectionName: string;
+  collectionNameEn: string;
   lat: number | null;
   lng: number | null;
   imageUrl: string | null;
   medium: string;
+  mediumEn: string;
   dimensions: string;
 }
 
@@ -164,6 +173,7 @@ export async function getArtworkDetail(qid: string): Promise<WikidataArtworkDeta
 
   const collectionEntity = collectionId ? refs[collectionId] : undefined;
   const medium = materialIds.map((id) => labelOf(refs[id])).filter(Boolean).join(', ');
+  const mediumEn = materialIds.map((id) => labelEnOf(refs[id])).filter(Boolean).join(', ');
 
   let dimensions = '';
   if (widthQ && heightQ) {
@@ -178,12 +188,16 @@ export async function getArtworkDetail(qid: string): Promise<WikidataArtworkDeta
   return {
     wikidataId: qid,
     title: labelOf(entity),
+    titleEn: labelEnOf(entity),
     artistName: creatorId ? labelOf(refs[creatorId]) : '',
+    artistNameEn: creatorId ? labelEnOf(refs[creatorId]) : '',
     year: yearOf(claims, 'P571'),
     collectionName: collectionId ? labelOf(collectionEntity) : '',
+    collectionNameEn: collectionId ? labelEnOf(collectionEntity) : '',
     ...(coordinateOf(collectionEntity?.claims, 'P625') ?? { lat: null, lng: null }),
     imageUrl: imageUrlOf(claims),
     medium,
+    mediumEn,
     dimensions,
   };
 }
@@ -191,6 +205,7 @@ export async function getArtworkDetail(qid: string): Promise<WikidataArtworkDeta
 export interface WikidataArtistDetail {
   wikidataId: string;
   name: string;
+  nameEn: string;
   bio: string;
   birthYear: number | null;
   deathYear: number | null;
@@ -212,6 +227,7 @@ export async function getArtistDetail(qid: string): Promise<WikidataArtistDetail
   return {
     wikidataId: qid,
     name: labelOf(entity),
+    nameEn: labelEnOf(entity),
     bio: descriptionOf(entity),
     birthYear: yearOf(claims, 'P569'),
     deathYear: yearOf(claims, 'P570'),

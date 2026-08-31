@@ -38,10 +38,12 @@ interface ArtworkModalProps {
 export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: ArtworkModalProps) {
   const [id, setId] = useState<string | undefined>(artworkId);
   const [title, setTitle] = useState('');
+  const [titleEn, setTitleEn] = useState('');
   const [artistId, setArtistId] = useState('');
   const [year, setYear] = useState('');
   const [yearDisplay, setYearDisplay] = useState('');
   const [collectionName, setCollectionName] = useState('');
+  const [collectionNameEn, setCollectionNameEn] = useState('');
   const [collectionCountry, setCollectionCountry] = useState('');
   const [collectionCity, setCollectionCity] = useState('');
   const [lat, setLat] = useState<number | null>(null);
@@ -49,6 +51,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
   const [imageUrl, setImageUrl] = useState('');
   const [description, setDescription] = useState('');
   const [medium, setMedium] = useState('');
+  const [mediumEn, setMediumEn] = useState('');
   const [dimensions, setDimensions] = useState('');
   const [wikidataId, setWikidataId] = useState('');
 
@@ -87,10 +90,12 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
       if (res.ok) {
         const data: ArtworkDetail = await res.json();
         setTitle(data.title);
+        setTitleEn(data.title_en ?? '');
         setArtistId(data.artist_id ?? '');
         setYear(data.year != null ? String(data.year) : '');
         setYearDisplay(data.year_display ?? '');
         setCollectionName(data.collection_name ?? '');
+        setCollectionNameEn(data.collection_name_en ?? '');
         setCollectionCountry(data.collection_country ?? '');
         setCollectionCity(data.collection_city ?? '');
         setLat(data.lat);
@@ -98,6 +103,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
         setImageUrl(data.image_url ?? '');
         setDescription(data.description ?? '');
         setMedium(data.medium ?? '');
+        setMediumEn(data.medium_en ?? '');
         setDimensions(data.dimensions ?? '');
         setWikidataId(data.wikidata_id ?? '');
         setAnnotations(data.annotations ?? []);
@@ -129,12 +135,15 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
       const detail: WikidataArtworkDetail = await res.json();
 
       setTitle(detail.title || item.label);
+      setTitleEn(detail.titleEn);
       setYear(detail.year != null ? String(detail.year) : '');
       setCollectionName(detail.collectionName);
+      setCollectionNameEn(detail.collectionNameEn);
       setLat(detail.lat);
       setLng(detail.lng);
       if (detail.imageUrl) setImageUrl(detail.imageUrl);
       if (detail.medium) setMedium(detail.medium);
+      setMediumEn(detail.mediumEn);
       if (detail.dimensions) setDimensions(detail.dimensions);
       setWikidataId(detail.wikidataId);
 
@@ -173,6 +182,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
           const detail = await detailRes.json();
           payload = {
             name: detail.name || suggestedArtistName,
+            name_en: detail.nameEn,
             bio: detail.bio,
             birth_year: detail.birthYear,
             death_year: detail.deathYear,
@@ -247,10 +257,12 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
     setError(null);
     const payload = {
       title,
+      title_en: titleEn,
       artist_id: artistId || null,
       year: year.trim() ? Number(year) : null,
       year_display: yearDisplay,
       collection_name: collectionName,
+      collection_name_en: collectionNameEn,
       collection_country: collectionCountry,
       collection_city: collectionCity,
       lat,
@@ -258,6 +270,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
       image_url: imageUrl || null,
       description,
       medium,
+      medium_en: mediumEn,
       dimensions,
       wikidata_id: wikidataId || null,
     };
@@ -384,6 +397,12 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
               <div>
                 <label className={labelClass}>작품 이름</label>
                 <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} placeholder="예: 별이 빛나는 밤" />
+                <input
+                  value={titleEn}
+                  onChange={(e) => setTitleEn(e.target.value)}
+                  className={`${inputClass} mt-1.5 text-[12.5px]`}
+                  placeholder="영문 작품명 (선택, 예: The Starry Night)"
+                />
               </div>
 
               <div className="flex gap-3">
@@ -462,6 +481,12 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
                     재료 / 기법
                   </label>
                   <input value={medium} onChange={(e) => setMedium(e.target.value)} className={inputClass} placeholder="예: 캔버스에 유채" />
+                  <input
+                    value={mediumEn}
+                    onChange={(e) => setMediumEn(e.target.value)}
+                    className={`${inputClass} mt-1.5 text-[12.5px]`}
+                    placeholder="영문 (선택, 예: Oil on canvas)"
+                  />
                 </div>
                 <div className="w-40">
                   <label className={labelClass}>
@@ -478,6 +503,12 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
                   소장처
                 </label>
                 <input value={collectionName} onChange={(e) => setCollectionName(e.target.value)} className={inputClass} placeholder="예: 루브르 박물관" />
+                <input
+                  value={collectionNameEn}
+                  onChange={(e) => setCollectionNameEn(e.target.value)}
+                  className={`${inputClass} mt-1.5 text-[12.5px]`}
+                  placeholder="영문 소장처 (선택, 예: Musée du Louvre)"
+                />
               </div>
 
               <div className="flex items-end gap-3">

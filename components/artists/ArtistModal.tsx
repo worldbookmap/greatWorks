@@ -36,6 +36,7 @@ interface ArtistModalProps {
 export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwork }: ArtistModalProps) {
   const [id, setId] = useState<string | undefined>(artistId);
   const [name, setName] = useState('');
+  const [nameEn, setNameEn] = useState('');
   const [bio, setBio] = useState('');
   const [birthYear, setBirthYear] = useState('');
   const [deathYear, setDeathYear] = useState('');
@@ -75,6 +76,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
       if (res.ok) {
         const data = await res.json();
         setName(data.name);
+        setNameEn(data.name_en ?? '');
         setBio(data.bio ?? '');
         setBirthYear(data.birth_year != null ? String(data.birth_year) : '');
         setDeathYear(data.death_year != null ? String(data.death_year) : '');
@@ -116,6 +118,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
       const detail: WikidataArtistDetail = await res.json();
 
       setName(detail.name || item.label);
+      setNameEn(detail.nameEn);
       if (detail.bio) setBio(detail.bio);
       setBirthYear(detail.birthYear != null ? String(detail.birthYear) : '');
       setDeathYear(detail.deathYear != null ? String(detail.deathYear) : '');
@@ -142,6 +145,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
     setError(null);
     const payload = {
       name,
+      name_en: nameEn,
       bio,
       birth_year: birthYear.trim() ? Number(birthYear) : null,
       death_year: deathYear.trim() ? Number(deathYear) : null,
@@ -299,6 +303,12 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
                 )}
                 <div className="flex-1 space-y-2">
                   <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder="화가 이름" />
+                  <input
+                    value={nameEn}
+                    onChange={(e) => setNameEn(e.target.value)}
+                    className={`${inputClass} text-[12.5px]`}
+                    placeholder="영문 이름 (선택, 예: Vincent van Gogh)"
+                  />
                   <input
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
