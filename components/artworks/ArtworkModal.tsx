@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   BookImage,
   Building2,
@@ -15,6 +15,7 @@ import {
   Sparkles,
   Trash2,
   TriangleAlert,
+  Upload,
   Wand2,
   X,
 } from 'lucide-react';
@@ -68,6 +69,9 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
   const [placeQuery, setPlaceQuery] = useState('');
   const [placeResults, setPlaceResults] = useState<PlaceSearchResult[]>([]);
   const [placeSearching, setPlaceSearching] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
   const [showPlaceSearch, setShowPlaceSearch] = useState(false);
 
   useEffect(() => {
@@ -214,6 +218,26 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
     setPlaceQuery('');
   }
 
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(body?.error ?? '이미지 업로드에 실패했습니다.');
+      setImageUrl(body.url);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setUploading(false);
+    }
+  }
+
   async function handleSave() {
     if (!title.trim()) {
       setError('작품 이름을 입력해주세요.');
@@ -311,7 +335,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
                 <div className="rounded-xl border border-teal/25 bg-teal/[0.06] p-3.5">
                   <label className={labelClass}>
                     <Search className="h-3.5 w-3.5 text-teal" strokeWidth={2.25} />
-                    Wikidata에서 작품 검색 (이름/작가/연도/소장처 자동 입력)
+                    Wikidata에서 작품 검색 (이름/작가/연도/소장처/이미지 자동 입력)
                   </label>
                   <div className="flex gap-2">
                     <input
@@ -401,9 +425,34 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
               <div>
                 <label className={labelClass}>
                   <BookImage className="h-3.5 w-3.5 text-[#8a8074]" strokeWidth={2.25} />
-                  이미지 URL
+                  이미지 {!imageUrl && <span className="font-normal text-[#a39a8d]">— Wikidata에 없으면 직접 업로드하세요</span>}
                 </label>
-                <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} className={inputClass} placeholder="https://..." />
+                <div className="flex items-center gap-2">
+                  {imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={imageUrl} alt="" className="h-[42px] w-[42px] shrink-0 rounded-lg object-cover ring-1 ring-black/[0.08]" />
+                  ) : (
+                    <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-lg bg-black/[0.03] ring-1 ring-black/[0.08]">
+                      <BookImage className="h-4 w-4 text-[#c9beae]" strokeWidth={1.5} />
+                    </div>
+                  )}
+                  <input
+                    value={imageUrl}
+                    onChange={(e) => setImageUrl(e.target.value)}
+                    className={inputClass}
+                    placeholder="https://... 또는 직접 업로드"
+                  />
+                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelected} className="hidden" />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="flex h-[42px] shrink-0 items-center gap-1.5 rounded-xl border border-black/[0.08] bg-white px-3.5 text-sm font-medium text-[#4a4038] transition-colors hover:bg-black/[0.03] disabled:opacity-40"
+                  >
+                    {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.25} /> : <Upload className="h-3.5 w-3.5" strokeWidth={2.25} />}
+                    업로드
+                  </button>
+                </div>
               </div>
 
               <div className="flex gap-3">

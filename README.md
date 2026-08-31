@@ -2,7 +2,7 @@
 
 화가와 작품, 작품 설명을 쉽게 찾아보는 개인용 명화 도감 웹앱.
 
-- **작품**: Wikidata에서 검색해 이름·작가·연도·소장처·이미지를 자동으로 채워 등록. 이미지를 클릭하면 그 위치에 설명 핫스팟을 추가할 수 있습니다.
+- **작품**: Wikidata에서 검색해 이름·작가·연도·소장처·이미지를 자동으로 채워 등록. Wikidata에 이미지가 없으면 직접 업로드할 수 있습니다(Supabase Storage). 이미지를 클릭하면 그 위치에 설명 핫스팟을 추가할 수 있습니다.
 - **화가**: Wikidata 검색으로 약력·생몰년·국적·화파를 자동 입력. 다른 화가와의 관계(사제관계, 라이벌 등)를 직접 연결할 수 있습니다.
 - **지도**: Leaflet + OpenStreetMap. 소장처 좌표가 있는 작품을 세계지도에 표시합니다.
 - **마인드맵**: `@xyflow/react` + `dagre`로 화가·작품·화가 간 관계를 시각화. 노드를 드래그해서 배치를 바꿀 수 있습니다.
@@ -13,7 +13,8 @@
 1. 의존성 설치: `npm install`
 2. `.env.local.example`을 `.env.local`로 복사하고 값을 채웁니다.
 3. Supabase 프로젝트를 만들고 SQL Editor에서 `supabase/schema.sql`을 실행합니다.
-4. `npm run dev` 후 `http://localhost:3000` 접속 → 설정한 `APP_PASSWORD`로 로그인.
+4. Supabase Storage에 `artwork-images` 버킷을 공개(public)로 만듭니다 (Storage → New bucket, Public bucket 체크). 이미지 직접 업로드에 사용됩니다.
+5. `npm run dev` 후 `http://localhost:3000` 접속 → 설정한 `APP_PASSWORD`로 로그인.
 
 ## 환경 변수
 
