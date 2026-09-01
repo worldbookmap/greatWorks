@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { RELATIONSHIP_TYPES } from '@/lib/types';
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
@@ -20,7 +19,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '같은 작가를 연결할 수 없습니다.' }, { status: 400 });
   }
 
-  const type = RELATIONSHIP_TYPES.includes(relationship_type) ? relationship_type : '기타';
+  // "기타"를 고르고 직접 입력한 값은 고정 목록에 없는 자유 텍스트로 그대로 저장합니다.
+  const type = typeof relationship_type === 'string' && relationship_type.trim() ? relationship_type.trim() : '기타';
 
   const { data, error } = await supabase
     .from('artist_relationships')

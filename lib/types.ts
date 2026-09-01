@@ -45,7 +45,9 @@ export interface ArtistRelationship {
   source_artist_id: string;
   target_artist_id: string | null;
   target_person_id: string | null;
-  relationship_type: RelationshipType;
+  // "기타"를 고르고 직접 입력하면 그 문구가 그대로 저장되므로 고정된 7종 중
+  // 하나가 아닐 수 있습니다.
+  relationship_type: string;
   description: string;
   created_at: string;
   source?: Artist;

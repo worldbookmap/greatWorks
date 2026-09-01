@@ -69,6 +69,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
   const [newPersonRole, setNewPersonRole] = useState('');
   const [creatingPerson, setCreatingPerson] = useState(false);
   const [relType, setRelType] = useState<RelationshipType>('사제관계');
+  const [relTypeCustom, setRelTypeCustom] = useState('');
   const [relDescription, setRelDescription] = useState('');
   const [addingRelationship, setAddingRelationship] = useState(false);
 
@@ -203,6 +204,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
 
   // 대상 작가/인물 중 하나를 지정해 현재 작가와의 관계를 만듭니다.
   async function createRelationship(targetArtistId: string | null, targetPersonId: string | null) {
+    const effectiveType = relType === '기타' && relTypeCustom.trim() ? relTypeCustom.trim() : relType;
     const res = await fetch('/api/relationships', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -210,7 +212,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
         source_artist_id: id,
         target_artist_id: targetArtistId,
         target_person_id: targetPersonId,
-        relationship_type: relType,
+        relationship_type: effectiveType,
         description: relDescription,
       }),
     });
@@ -242,6 +244,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
       setNewPersonRole('');
       setRelPersonId('');
       setRelDescription('');
+      setRelTypeCustom('');
       await refreshDetail(id);
     } catch (e) {
       setError((e as Error).message);
@@ -261,6 +264,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
       setRelTargetId('');
       setRelPersonId('');
       setRelDescription('');
+      setRelTypeCustom('');
       await refreshDetail(id);
     } catch (e) {
       setError((e as Error).message);
@@ -479,6 +483,14 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
                           </option>
                         ))}
                       </select>
+                      {relType === '기타' && (
+                        <input
+                          value={relTypeCustom}
+                          onChange={(e) => setRelTypeCustom(e.target.value)}
+                          placeholder="관계 직접 입력 (예: 동업자)"
+                          className={`${inputClass} w-auto flex-1 text-[12.5px]`}
+                        />
+                      )}
                       <button
                         onClick={handleAddRelationship}
                         disabled={(relTargetKind === 'artist' ? !relTargetId : !relPersonId) || addingRelationship}

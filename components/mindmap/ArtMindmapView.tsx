@@ -106,6 +106,7 @@ export function ArtMindmapView() {
 
   const [pendingConnection, setPendingConnection] = useState<PendingConnection | null>(null);
   const [connType, setConnType] = useState<RelationshipType>('기타');
+  const [connTypeCustom, setConnTypeCustom] = useState('');
   const [connDescription, setConnDescription] = useState('');
   const [connecting, setConnecting] = useState(false);
   const [connError, setConnError] = useState<string | null>(null);
@@ -185,6 +186,7 @@ export function ArtMindmapView() {
       const findLabel = (nodeId: string) => rawNodes.find((n) => n.id === nodeId)?.label ?? '';
 
       setConnType('기타');
+      setConnTypeCustom('');
       setConnDescription('');
       setConnError(null);
       setPendingConnection({
@@ -202,6 +204,7 @@ export function ArtMindmapView() {
     if (!pendingConnection) return;
     setConnecting(true);
     setConnError(null);
+    const effectiveType = connType === '기타' && connTypeCustom.trim() ? connTypeCustom.trim() : connType;
     try {
       const res = await fetch('/api/relationships', {
         method: 'POST',
@@ -210,7 +213,7 @@ export function ArtMindmapView() {
           source_artist_id: pendingConnection.artistId,
           target_artist_id: pendingConnection.otherType === 'artist' ? pendingConnection.otherId : null,
           target_person_id: pendingConnection.otherType === 'person' ? pendingConnection.otherId : null,
-          relationship_type: connType,
+          relationship_type: effectiveType,
           description: connDescription,
         }),
       });
@@ -395,6 +398,15 @@ export function ArtMindmapView() {
                 </option>
               ))}
             </select>
+
+            {connType === '기타' && (
+              <input
+                value={connTypeCustom}
+                onChange={(e) => setConnTypeCustom(e.target.value)}
+                placeholder="관계 직접 입력 (예: 동업자)"
+                className="mb-3 w-full rounded-xl border border-black/[0.08] bg-black/[0.02] px-3.5 py-2.5 text-sm text-[#2a231c] placeholder:text-[#a39a8d] outline-none transition-colors focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
+              />
+            )}
 
             <label className="mb-1.5 block text-[13px] font-medium text-[#4a4038]">관계 설명 (선택)</label>
             <input
