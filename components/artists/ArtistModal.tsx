@@ -221,7 +221,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
   }
 
   // 새 인물은 등록과 동시에 현재 작가와의 관계도 함께 만들어야, 등록만 하고
-  // 연결(마인드맵 표시)을 놓치는 일이 없습니다.
+  // 연결(인물관계 화면 표시)을 놓치는 일이 없습니다.
   async function handleCreatePerson() {
     if (!newPersonName.trim() || !id) return;
     setCreatingPerson(true);

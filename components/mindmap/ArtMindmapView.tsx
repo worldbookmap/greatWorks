@@ -9,6 +9,7 @@ import {
   MiniMap,
   Position,
   ReactFlow,
+  type Connection,
   type Edge,
   type Node,
   type NodeChange,
@@ -17,8 +18,10 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import dagre from '@dagrejs/dagre';
-import { Palette, Search, User, UserRound, Waypoints } from 'lucide-react';
-import type { MindmapEdge, MindmapNode } from '@/lib/types';
+import { Link2, Loader2, Palette, Search, TriangleAlert, User, UserRound, Waypoints, X } from 'lucide-react';
+import type { MindmapEdge, MindmapNode, RelationshipType } from '@/lib/types';
+import { RELATIONSHIP_TYPES } from '@/lib/types';
+import { useToast } from '@/components/ui/Toast';
 import { ArtworkModal } from '@/components/artworks/ArtworkModal';
 import { ArtworkDetailModal } from '@/components/artworks/ArtworkDetailModal';
 import { ArtistModal } from '@/components/artists/ArtistModal';
@@ -83,7 +86,16 @@ function layout(nodes: MindmapNode[], edges: MindmapEdge[]): Node[] {
 
 type ActiveNode = { type: MindmapNode['type']; id: string };
 
+interface PendingConnection {
+  artistId: string;
+  artistLabel: string;
+  otherType: 'artist' | 'person';
+  otherId: string;
+  otherLabel: string;
+}
+
 export function ArtMindmapView() {
+  const { showToast } = useToast();
   const [rawNodes, setRawNodes] = useState<MindmapNode[]>([]);
   const [rawEdges, setRawEdges] = useState<MindmapEdge[]>([]);
   const [search, setSearch] = useState('');
@@ -91,6 +103,12 @@ export function ArtMindmapView() {
   const [activeNode, setActiveNode] = useState<ActiveNode | null>(null);
   const [editNode, setEditNode] = useState<ActiveNode | null>(null);
   const [positionedNodes, setPositionedNodes] = useState<Node[]>([]);
+
+  const [pendingConnection, setPendingConnection] = useState<PendingConnection | null>(null);
+  const [connType, setConnType] = useState<RelationshipType>('기타');
+  const [connDescription, setConnDescription] = useState('');
+  const [connecting, setConnecting] = useState(false);
+  const [connError, setConnError] = useState<string | null>(null);
 
   async function refetchMindmap() {
     const res = await fetch('/api/mindmap');
@@ -144,6 +162,72 @@ export function ArtMindmapView() {
     setActiveNode({ type, id: rawId });
   };
 
+  // 맵에서 노드끼리 드래그로 직접 연결하면 작가-작가 또는 작가-인물 관계를 새로 만듭니다.
+  // 작품 노드는 소속 작가로 자동 연결되므로 대상에서 제외하고, 인물끼리는 아직 지원하지 않습니다.
+  const handleConnect = useCallback(
+    (params: Connection) => {
+      if (!params.source || !params.target || params.source === params.target) return;
+      const [sourceType, sourceId] = params.source.split(':') as [MindmapNode['type'], string];
+      const [targetType, targetId] = params.target.split(':') as [MindmapNode['type'], string];
+
+      if (sourceType === 'artwork' || targetType === 'artwork') {
+        showToast('작품 노드는 관계로 연결할 수 없어요.');
+        return;
+      }
+      if (sourceType === 'person' && targetType === 'person') {
+        showToast('인물끼리는 아직 연결할 수 없어요.');
+        return;
+      }
+
+      const artistId = sourceType === 'artist' ? sourceId : targetId;
+      const otherType = sourceType === 'artist' ? targetType : sourceType;
+      const otherId = sourceType === 'artist' ? targetId : sourceId;
+      const findLabel = (nodeId: string) => rawNodes.find((n) => n.id === nodeId)?.label ?? '';
+
+      setConnType('기타');
+      setConnDescription('');
+      setConnError(null);
+      setPendingConnection({
+        artistId,
+        artistLabel: findLabel(`artist:${artistId}`),
+        otherType: otherType as 'artist' | 'person',
+        otherId,
+        otherLabel: findLabel(`${otherType}:${otherId}`),
+      });
+    },
+    [rawNodes, showToast]
+  );
+
+  async function handleConfirmConnection() {
+    if (!pendingConnection) return;
+    setConnecting(true);
+    setConnError(null);
+    try {
+      const res = await fetch('/api/relationships', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source_artist_id: pendingConnection.artistId,
+          target_artist_id: pendingConnection.otherType === 'artist' ? pendingConnection.otherId : null,
+          target_person_id: pendingConnection.otherType === 'person' ? pendingConnection.otherId : null,
+          relationship_type: connType,
+          description: connDescription,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error ?? '관계 연결에 실패했습니다.');
+      }
+      showToast('연결되었습니다');
+      setPendingConnection(null);
+      await refetchMindmap();
+    } catch (e) {
+      setConnError((e as Error).message);
+    } finally {
+      setConnecting(false);
+    }
+  }
+
   function closePanel() {
     setActiveNode(null);
   }
@@ -185,6 +269,9 @@ export function ArtMindmapView() {
             );
           })}
         </div>
+        <p className="mt-2 hidden max-w-64 text-[11px] leading-relaxed text-[#8a8074] sm:block">
+          노드 옆 점을 드래그해 다른 화가·인물에 놓으면 관계가 만들어져요.
+        </p>
       </div>
 
       {isEmpty && (
@@ -201,6 +288,8 @@ export function ArtMindmapView() {
           nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
           onNodeClick={handleNodeClick}
+          onConnect={handleConnect}
+          connectionLineStyle={{ stroke: '#0fb5a8', strokeWidth: 2 }}
           colorMode="light"
           fitView
           proOptions={{ hideAttribution: true }}
@@ -270,6 +359,75 @@ export function ArtMindmapView() {
             closeEditPanel();
           }}
         />
+      )}
+
+      {pendingConnection && (
+        <div className="fixed inset-0 z-[3500] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-black/[0.08] bg-surface p-5 shadow-2xl shadow-black/20">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h3 className="flex items-center gap-1.5 text-[14px] font-semibold text-[#2a231c]">
+                <Link2 className="h-4 w-4 text-teal" strokeWidth={2.25} />
+                관계 연결
+              </h3>
+              <button
+                onClick={() => setPendingConnection(null)}
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[#6b6258] transition-colors hover:bg-black/[0.05]"
+              >
+                <X className="h-3.5 w-3.5" strokeWidth={2.25} />
+              </button>
+            </div>
+
+            <p className="mb-3 truncate text-[12.5px] text-[#6b6258]">
+              <span className="font-medium text-[#2a231c]">{pendingConnection.artistLabel}</span>
+              {' → '}
+              <span className="font-medium text-[#2a231c]">{pendingConnection.otherLabel}</span>
+            </p>
+
+            <label className="mb-1.5 block text-[13px] font-medium text-[#4a4038]">관계 유형</label>
+            <select
+              value={connType}
+              onChange={(e) => setConnType(e.target.value as RelationshipType)}
+              className="mb-3 w-full appearance-none rounded-xl border border-black/[0.08] bg-black/[0.02] px-3.5 py-2.5 text-sm text-[#2a231c] outline-none transition-colors focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
+            >
+              {RELATIONSHIP_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+
+            <label className="mb-1.5 block text-[13px] font-medium text-[#4a4038]">관계 설명 (선택)</label>
+            <input
+              value={connDescription}
+              onChange={(e) => setConnDescription(e.target.value)}
+              className="mb-3 w-full rounded-xl border border-black/[0.08] bg-black/[0.02] px-3.5 py-2.5 text-sm text-[#2a231c] placeholder:text-[#a39a8d] outline-none transition-colors focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
+            />
+
+            {connError && (
+              <div className="mb-3 flex items-center gap-2 rounded-lg bg-red-500/10 px-3 py-2 text-[13px] text-red-600">
+                <TriangleAlert className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
+                {connError}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setPendingConnection(null)}
+                className="rounded-xl border border-black/[0.08] bg-white px-3.5 py-2 text-sm font-medium text-[#4a4038] transition-colors hover:bg-black/[0.03]"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleConfirmConnection}
+                disabled={connecting}
+                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent to-accent-strong px-4 py-2 text-sm font-medium text-white shadow-lg shadow-accent/25 transition-opacity hover:opacity-90 disabled:opacity-50"
+              >
+                {connecting ? <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.25} /> : <Link2 className="h-3.5 w-3.5" strokeWidth={2.25} />}
+                연결
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

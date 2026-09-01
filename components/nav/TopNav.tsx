@@ -9,7 +9,7 @@ const TABS = [
   { href: '/artists', label: '화가', icon: User },
   { href: '/era', label: '연대', icon: CalendarRange },
   { href: '/map', label: '지도', icon: Map },
-  { href: '/mindmap', label: '마인드맵', icon: Waypoints },
+  { href: '/mindmap', label: '인물관계', icon: Waypoints },
 ];
 
 export function TopNav() {
