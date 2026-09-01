@@ -43,9 +43,9 @@ export function ArtistDetailModal({ artistId, onClose, onEdit, onDeleted, onOpen
   const subtitle = artist ? [artist.nationality, lifespan(artist)].filter(Boolean).join(' · ') : '';
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-      <div className="max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-black/[0.08] bg-surface shadow-2xl shadow-black/20">
-        <div className="flex items-center justify-between gap-2 border-b border-black/[0.06] px-4 sm:px-6 py-4">
+    <div className="fixed inset-0 z-[3500] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+      <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-black/[0.08] bg-surface shadow-2xl shadow-black/20">
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-black/[0.06] px-4 sm:px-6 py-4">
           <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#2a231c]">
             <User className="h-4 w-4 text-accent-strong" strokeWidth={2.25} />
             화가 정보
@@ -58,7 +58,7 @@ export function ArtistDetailModal({ artistId, onClose, onEdit, onDeleted, onOpen
           </button>
         </div>
 
-        <div className="px-4 sm:px-6 py-5">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5">
           {loading || !artist ? (
             <p className="text-sm text-[#6b6258]">불러오는 중...</p>
           ) : (
@@ -140,26 +140,28 @@ export function ArtistDetailModal({ artistId, onClose, onEdit, onDeleted, onOpen
                   </div>
                 </div>
               )}
-
-              <div className="flex gap-2 border-t border-black/[0.06] pt-4">
-                <button
-                  onClick={onEdit}
-                  className="flex items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent to-accent-strong px-4 py-2 text-sm font-medium text-white shadow-lg shadow-accent/25 transition-opacity hover:opacity-90"
-                >
-                  <Pencil className="h-3.5 w-3.5" strokeWidth={2.25} />
-                  수정
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="flex items-center gap-1.5 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-500/10"
-                >
-                  <Trash2 className="h-3.5 w-3.5" strokeWidth={2.25} />
-                  삭제
-                </button>
-              </div>
             </div>
           )}
         </div>
+
+        {!loading && artist && (
+          <div className="flex shrink-0 gap-2 border-t border-black/[0.06] px-4 sm:px-6 py-4">
+            <button
+              onClick={onEdit}
+              className="flex items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent to-accent-strong px-4 py-2 text-sm font-medium text-white shadow-lg shadow-accent/25 transition-opacity hover:opacity-90"
+            >
+              <Pencil className="h-3.5 w-3.5" strokeWidth={2.25} />
+              수정
+            </button>
+            <button
+              onClick={handleDelete}
+              className="flex items-center gap-1.5 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-500/10"
+            >
+              <Trash2 className="h-3.5 w-3.5" strokeWidth={2.25} />
+              삭제
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

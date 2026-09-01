@@ -6,7 +6,7 @@ import { sanitizeSearchTerm } from '@/lib/search';
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get('q')?.trim();
 
-  let query = supabase.from('artists').select('*').order('created_at', { ascending: false });
+  let query = supabase.from('artists').select('*').order('name', { ascending: true });
   if (q) {
     const term = sanitizeSearchTerm(q);
     query = query.or(`name.ilike.%${term}%,nationality.ilike.%${term}%,movement.ilike.%${term}%`);

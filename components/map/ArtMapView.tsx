@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
-import { MapPin } from 'lucide-react';
+import { ImageOff, MapPin } from 'lucide-react';
 import type { Artwork } from '@/lib/types';
 import { ArtworkModal } from '@/components/artworks/ArtworkModal';
 import { ArtworkDetailModal } from '@/components/artworks/ArtworkDetailModal';
@@ -71,9 +71,19 @@ export function ArtMapView() {
                     <li key={art.id}>
                       <button
                         onClick={() => setDetailArtworkId(art.id)}
-                        className="block w-full truncate rounded-lg px-2 py-1.5 text-left text-[12.5px] text-[#2a231c] transition-colors hover:bg-accent/10"
+                        className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent/10"
                       >
-                        {art.title}, {art.artist?.name ?? '작가 미상'}
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-black/[0.05]">
+                          {art.image_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={art.image_url} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            <ImageOff className="h-3.5 w-3.5 text-[#c9beae]" strokeWidth={1.5} />
+                          )}
+                        </div>
+                        <span className="min-w-0 truncate text-[12.5px] text-[#2a231c]">
+                          {art.artist?.name ?? '작가 미상'}, <span className="font-semibold">&lt;{art.title}&gt;</span>
+                        </span>
                       </button>
                     </li>
                   ))}

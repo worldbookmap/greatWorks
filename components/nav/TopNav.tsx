@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Images, Map, Palette, User, Waypoints } from 'lucide-react';
+import { CalendarRange, Images, Map, Palette, User, Waypoints } from 'lucide-react';
 
 const TABS = [
   { href: '/artworks', label: '작품', icon: Images },
   { href: '/artists', label: '화가', icon: User },
+  { href: '/era', label: '연대', icon: CalendarRange },
   { href: '/map', label: '지도', icon: Map },
   { href: '/mindmap', label: '마인드맵', icon: Waypoints },
 ];

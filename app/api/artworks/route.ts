@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   let query = supabase
     .from('artworks')
     .select('*, artist:artists(*)')
-    .order('created_at', { ascending: false });
+    .order('title', { ascending: true });
 
   if (artistId) query = query.eq('artist_id', artistId);
   if (q) {

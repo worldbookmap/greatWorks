@@ -5,6 +5,7 @@ import {
   BookImage,
   Building2,
   CalendarClock,
+  ClipboardPaste,
   Layers,
   Loader2,
   MapPinned,
@@ -27,6 +28,74 @@ import { AnnotationLayer } from './AnnotationLayer';
 const inputClass =
   'w-full rounded-xl border border-black/[0.08] bg-black/[0.02] px-3.5 py-2.5 text-sm text-[#2a231c] placeholder:text-[#a39a8d] outline-none transition-colors focus:border-accent/50 focus:ring-2 focus:ring-accent/20';
 const labelClass = 'mb-1.5 flex items-center gap-1.5 text-[13px] font-medium text-[#4a4038]';
+
+interface QuickArtworkEntry {
+  title?: string;
+  artistName?: string;
+  year?: number | null;
+  yearDisplay?: string;
+  medium?: string;
+  dimensions?: string;
+  collectionName?: string;
+}
+
+// "작가명, <작품명>, 제작연도. 재료, 크기. 소장처" 형식의 한 줄 입력을 각 항목으로 분리합니다.
+function parseQuickArtworkEntry(input: string): QuickArtworkEntry | null {
+  const text = input.trim();
+  if (!text) return null;
+
+  // 소수점이 있는 크기 표기(예: 73.7 cm)를 문장 구분자로 잘못 나누지 않도록,
+  // 마침표 뒤에 공백이나 문자열 끝이 오는 경우만 구분자로 취급합니다.
+  const [firstSeg, secondSeg, ...restSegs] = text
+    .split(/\.(?=\s|$)/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const result: QuickArtworkEntry = {};
+
+  if (firstSeg) {
+    const parts = firstSeg
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const titleIdx = parts.findIndex((p) => /^<.+>$/.test(p));
+
+    if (titleIdx >= 0) {
+      result.title = parts[titleIdx].slice(1, -1).trim();
+      const before = parts.slice(0, titleIdx).join(', ').trim();
+      const after = parts.slice(titleIdx + 1).join(', ').trim();
+      if (before) result.artistName = before;
+      if (after) {
+        const yearMatch = after.match(/-?\d+/);
+        result.year = yearMatch ? Number(yearMatch[0]) : null;
+        result.yearDisplay = after;
+      }
+    } else if (parts.length > 0) {
+      // <작품명> 표기가 없으면 "작가명, 작품명, 연도" 순서로 추정합니다.
+      if (parts[0]) result.artistName = parts[0];
+      if (parts[1]) result.title = parts[1];
+      if (parts[2]) {
+        const yearMatch = parts[2].match(/-?\d+/);
+        result.year = yearMatch ? Number(yearMatch[0]) : null;
+        result.yearDisplay = parts[2];
+      }
+    }
+  }
+
+  if (secondSeg) {
+    const parts = secondSeg
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (parts[0]) result.medium = parts[0];
+    if (parts.length > 1) result.dimensions = parts.slice(1).join(', ');
+  }
+
+  if (restSegs.length > 0) {
+    result.collectionName = restSegs.join('. ').trim();
+  }
+
+  return result;
+}
 
 interface ArtworkModalProps {
   artworkId?: string;
@@ -68,6 +137,8 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
   const [wdResults, setWdResults] = useState<WikidataSearchItem[]>([]);
   const [wdSearching, setWdSearching] = useState(false);
   const [wdApplying, setWdApplying] = useState<string | null>(null);
+
+  const [quickEntry, setQuickEntry] = useState('');
 
   const [placeQuery, setPlaceQuery] = useState('');
   const [placeResults, setPlaceResults] = useState<PlaceSearchResult[]>([]);
@@ -164,6 +235,29 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
       setError((e as Error).message);
     } finally {
       setWdApplying(null);
+    }
+  }
+
+  function handleApplyQuickEntry() {
+    const parsed = parseQuickArtworkEntry(quickEntry);
+    if (!parsed) return;
+
+    if (parsed.title) setTitle(parsed.title);
+    if (parsed.year != null) setYear(String(parsed.year));
+    if (parsed.yearDisplay) setYearDisplay(parsed.yearDisplay);
+    if (parsed.medium) setMedium(parsed.medium);
+    if (parsed.dimensions) setDimensions(parsed.dimensions);
+    if (parsed.collectionName) setCollectionName(parsed.collectionName);
+
+    if (parsed.artistName) {
+      const match = artists.find((a) => a.name.trim().toLowerCase() === parsed.artistName!.trim().toLowerCase());
+      if (match) {
+        setArtistId(match.id);
+        setSuggestedArtistName(null);
+      } else {
+        setArtistId('');
+        setSuggestedArtistName(parsed.artistName);
+      }
     }
   }
 
@@ -324,9 +418,9 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
   }
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-      <div className="max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-black/[0.08] bg-surface shadow-2xl shadow-black/20">
-        <div className="flex items-center justify-between gap-2 border-b border-black/[0.06] px-4 sm:px-6 py-4">
+    <div className="fixed inset-0 z-[3500] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+      <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-black/[0.08] bg-surface shadow-2xl shadow-black/20">
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-black/[0.06] px-4 sm:px-6 py-4">
           <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#2a231c]">
             <Palette className="h-4 w-4 text-accent-strong" strokeWidth={2.25} />
             {id ? '작품 정보 수정' : '새 작품 추가'}
@@ -339,11 +433,34 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
           </button>
         </div>
 
-        <div className="px-4 sm:px-6 py-5">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5">
           {loading ? (
             <p className="text-sm text-[#6b6258]">불러오는 중...</p>
           ) : (
             <div className="space-y-5">
+              <div className="rounded-xl border border-accent/25 bg-accent/[0.06] p-3.5">
+                <label className={labelClass}>
+                  <ClipboardPaste className="h-3.5 w-3.5 text-accent-strong" strokeWidth={2.25} />
+                  빠른 입력 — 한 줄로 붙여넣으면 항목을 자동으로 나눠 넣어요
+                </label>
+                <textarea
+                  value={quickEntry}
+                  onChange={(e) => setQuickEntry(e.target.value)}
+                  rows={2}
+                  placeholder="작가명, <작품명>, 제작연도. 재료, 크기(높이 X 너비 단위). 소장처"
+                  className={`${inputClass} resize-none`}
+                />
+                <button
+                  type="button"
+                  onClick={handleApplyQuickEntry}
+                  disabled={!quickEntry.trim()}
+                  className="mt-2 flex items-center gap-1.5 rounded-lg border border-black/[0.08] bg-white px-3.5 py-1.5 text-[12.5px] font-medium text-[#4a4038] transition-colors hover:bg-black/[0.03] disabled:opacity-40"
+                >
+                  <Wand2 className="h-3.5 w-3.5" strokeWidth={2.25} />
+                  자동으로 나누어 넣기
+                </button>
+              </div>
+
               {!id && (
                 <div className="rounded-xl border border-teal/25 bg-teal/[0.06] p-3.5">
                   <label className={labelClass}>
@@ -579,33 +696,6 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
                 />
               </div>
 
-              {error && (
-                <div className="flex items-center gap-2 rounded-lg bg-red-500/10 px-3 py-2 text-[13px] text-red-600">
-                  <TriangleAlert className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
-                  {error}
-                </div>
-              )}
-
-              <div className="flex gap-2">
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="flex items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent to-accent-strong px-4 py-2 text-sm font-medium text-white shadow-lg shadow-accent/25 transition-opacity hover:opacity-90 disabled:opacity-50"
-                >
-                  <Save className="h-3.5 w-3.5" strokeWidth={2.25} />
-                  {saving ? '저장 중...' : id ? '저장' : '저장하고 설명 추가하기'}
-                </button>
-                {id && (
-                  <button
-                    onClick={handleDelete}
-                    className="flex items-center gap-1.5 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-500/10"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" strokeWidth={2.25} />
-                    작품 삭제
-                  </button>
-                )}
-              </div>
-
               <div className="border-t border-black/[0.06] pt-5">
                 <h3 className="mb-3 flex items-center gap-1.5 text-[13px] font-semibold text-[#2a231c]">
                   <Sparkles className="h-4 w-4 text-teal" strokeWidth={2.25} />
@@ -628,6 +718,36 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
             </div>
           )}
         </div>
+
+        {!loading && (
+          <div className="flex shrink-0 flex-col gap-2 border-t border-black/[0.06] px-4 sm:px-6 py-4">
+            {error && (
+              <div className="flex items-center gap-2 rounded-lg bg-red-500/10 px-3 py-2 text-[13px] text-red-600">
+                <TriangleAlert className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
+                {error}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent to-accent-strong px-4 py-2 text-sm font-medium text-white shadow-lg shadow-accent/25 transition-opacity hover:opacity-90 disabled:opacity-50"
+              >
+                <Save className="h-3.5 w-3.5" strokeWidth={2.25} />
+                {saving ? '저장 중...' : id ? '저장' : '저장하고 설명 추가하기'}
+              </button>
+              {id && (
+                <button
+                  onClick={handleDelete}
+                  className="flex items-center gap-1.5 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-500/10"
+                >
+                  <Trash2 className="h-3.5 w-3.5" strokeWidth={2.25} />
+                  작품 삭제
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
