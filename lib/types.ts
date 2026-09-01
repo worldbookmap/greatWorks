@@ -40,6 +40,10 @@ export interface RelatedPerson {
   created_at: string;
 }
 
+export interface PersonDetail extends RelatedPerson {
+  relationships: ArtistRelationship[];
+}
+
 export interface ArtistRelationship {
   id: string;
   source_artist_id: string;

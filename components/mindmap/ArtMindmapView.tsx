@@ -26,6 +26,7 @@ import { ArtworkModal } from '@/components/artworks/ArtworkModal';
 import { ArtworkDetailModal } from '@/components/artworks/ArtworkDetailModal';
 import { ArtistModal } from '@/components/artists/ArtistModal';
 import { ArtistDetailModal } from '@/components/artists/ArtistDetailModal';
+import { PersonDetailModal } from '@/components/artists/PersonDetailModal';
 
 const NODE_STYLE: Record<MindmapNode['type'], { icon: typeof User; color: string; ring: string; bg: string }> = {
   artist: { icon: User, color: '#0fb5a8', ring: 'rgba(15,181,168,0.4)', bg: 'rgba(15,181,168,0.08)' },
@@ -321,6 +322,18 @@ export function ArtMindmapView() {
             closePanel();
           }}
           onOpenArtwork={(artworkId) => setActiveNode({ type: 'artwork', id: artworkId })}
+        />
+      )}
+
+      {activeNode?.type === 'person' && (
+        <PersonDetailModal
+          personId={activeNode.id}
+          onClose={closePanel}
+          onDeleted={() => {
+            refetchMindmap();
+            closePanel();
+          }}
+          onOpenArtist={(artistId) => setActiveNode({ type: 'artist', id: artistId })}
         />
       )}
 
