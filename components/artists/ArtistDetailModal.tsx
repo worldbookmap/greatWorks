@@ -96,7 +96,8 @@ export function ArtistDetailModal({ artistId, onClose, onEdit, onDeleted, onOpen
                   </h3>
                   <ul className="space-y-1">
                     {artist.relationships.map((rel) => {
-                      const other = rel.source_artist_id === artist.id ? rel.target : rel.source;
+                      const isPerson = !!rel.target_person;
+                      const otherName = isPerson ? rel.target_person?.name : (rel.source_artist_id === artist.id ? rel.target : rel.source)?.name;
                       const direction = rel.source_artist_id === artist.id ? '→' : '←';
                       return (
                         <li key={rel.id} className="flex items-center gap-2 text-[12.5px] text-[#2a231c]">
@@ -104,7 +105,10 @@ export function ArtistDetailModal({ artistId, onClose, onEdit, onDeleted, onOpen
                             {rel.relationship_type}
                           </span>
                           <span>
-                            {direction} {other?.name ?? '알 수 없음'}
+                            {direction} {otherName ?? '알 수 없음'}
+                            {isPerson && rel.target_person?.role && (
+                              <span className="text-[#8a8074]"> · {rel.target_person.role}</span>
+                            )}
                           </span>
                         </li>
                       );

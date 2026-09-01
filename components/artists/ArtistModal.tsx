@@ -13,11 +13,12 @@ import {
   Trash2,
   TriangleAlert,
   User,
+  UserRound,
   Users,
   Wand2,
   X,
 } from 'lucide-react';
-import type { Artist, ArtistRelationship, Artwork, RelationshipType } from '@/lib/types';
+import type { Artist, ArtistRelationship, Artwork, RelatedPerson, RelationshipType } from '@/lib/types';
 import { RELATIONSHIP_TYPES } from '@/lib/types';
 import type { WikidataArtistDetail, WikidataSearchItem } from '@/lib/wikidata';
 
@@ -48,6 +49,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
   const [artworks, setArtworks] = useState<Artwork[]>([]);
   const [relationships, setRelationships] = useState<ArtistRelationship[]>([]);
   const [allArtists, setAllArtists] = useState<Artist[]>([]);
+  const [allPeople, setAllPeople] = useState<RelatedPerson[]>([]);
 
   const [loading, setLoading] = useState(!!artistId);
   const [saving, setSaving] = useState(false);
@@ -58,7 +60,12 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
   const [wdSearching, setWdSearching] = useState(false);
   const [wdApplying, setWdApplying] = useState<string | null>(null);
 
+  const [relTargetKind, setRelTargetKind] = useState<'artist' | 'person'>('artist');
   const [relTargetId, setRelTargetId] = useState('');
+  const [relPersonId, setRelPersonId] = useState('');
+  const [newPersonName, setNewPersonName] = useState('');
+  const [newPersonRole, setNewPersonRole] = useState('');
+  const [creatingPerson, setCreatingPerson] = useState(false);
   const [relType, setRelType] = useState<RelationshipType>('사제관계');
   const [relDescription, setRelDescription] = useState('');
   const [addingRelationship, setAddingRelationship] = useState(false);
@@ -67,6 +74,9 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
     fetch('/api/artists')
       .then((res) => (res.ok ? res.json() : []))
       .then(setAllArtists);
+    fetch('/api/people')
+      .then((res) => (res.ok ? res.json() : []))
+      .then(setAllPeople);
   }, []);
 
   useEffect(() => {
@@ -188,8 +198,33 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
     if (res.ok) onDeleted();
   }
 
+  async function handleCreatePerson() {
+    if (!newPersonName.trim()) return;
+    setCreatingPerson(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/people', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newPersonName.trim(), role: newPersonRole.trim() }),
+      });
+      if (!res.ok) throw new Error('인물 등록에 실패했습니다.');
+      const created: RelatedPerson = await res.json();
+      setAllPeople((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name, 'ko')));
+      setRelPersonId(created.id);
+      setNewPersonName('');
+      setNewPersonRole('');
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setCreatingPerson(false);
+    }
+  }
+
   async function handleAddRelationship() {
-    if (!id || !relTargetId) return;
+    if (!id) return;
+    if (relTargetKind === 'artist' && !relTargetId) return;
+    if (relTargetKind === 'person' && !relPersonId) return;
     setAddingRelationship(true);
     setError(null);
     const res = await fetch('/api/relationships', {
@@ -197,7 +232,8 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         source_artist_id: id,
-        target_artist_id: relTargetId,
+        target_artist_id: relTargetKind === 'artist' ? relTargetId : null,
+        target_person_id: relTargetKind === 'person' ? relPersonId : null,
         relationship_type: relType,
         description: relDescription,
       }),
@@ -205,6 +241,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
     setAddingRelationship(false);
     if (res.ok) {
       setRelTargetId('');
+      setRelPersonId('');
       setRelDescription('');
       await refreshDetail(id);
     } else {
@@ -355,24 +392,63 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
               <div className="border-t border-black/[0.06] pt-5">
                 <h3 className="mb-3 flex items-center gap-1.5 text-[13px] font-semibold text-[#2a231c]">
                   <Users className="h-4 w-4 text-teal" strokeWidth={2.25} />
-                  다른 작가와의 관계
+                  다른 작가 · 인물과의 관계
                 </h3>
                 {!id && <p className="mb-3 text-xs text-[#8a8074]">작가를 먼저 저장하면 관계를 추가할 수 있어요.</p>}
                 {id && (
                   <>
-                    <div className="mb-3 flex flex-wrap items-center gap-2">
-                      <select
-                        value={relTargetId}
-                        onChange={(e) => setRelTargetId(e.target.value)}
-                        className={`${inputClass} w-auto flex-1 appearance-none`}
+                    <div className="mb-2 inline-flex items-center gap-0.5 rounded-lg border border-black/[0.08] bg-white p-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setRelTargetKind('artist')}
+                        className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-[12px] font-medium transition-colors ${
+                          relTargetKind === 'artist' ? 'bg-teal/10 text-teal' : 'text-[#8a8074] hover:text-[#4a4038]'
+                        }`}
                       >
-                        <option value="">작가 선택</option>
-                        {otherArtists.map((a) => (
-                          <option key={a.id} value={a.id}>
-                            {a.name}
-                          </option>
-                        ))}
-                      </select>
+                        <User className="h-3 w-3" strokeWidth={2.5} />
+                        작가
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setRelTargetKind('person')}
+                        className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-[12px] font-medium transition-colors ${
+                          relTargetKind === 'person' ? 'bg-teal/10 text-teal' : 'text-[#8a8074] hover:text-[#4a4038]'
+                        }`}
+                      >
+                        <UserRound className="h-3 w-3" strokeWidth={2.5} />
+                        인물 (배우자·친구 등)
+                      </button>
+                    </div>
+
+                    <div className="mb-3 flex flex-wrap items-center gap-2">
+                      {relTargetKind === 'artist' ? (
+                        <select
+                          value={relTargetId}
+                          onChange={(e) => setRelTargetId(e.target.value)}
+                          className={`${inputClass} w-auto flex-1 appearance-none`}
+                        >
+                          <option value="">작가 선택</option>
+                          {otherArtists.map((a) => (
+                            <option key={a.id} value={a.id}>
+                              {a.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <select
+                          value={relPersonId}
+                          onChange={(e) => setRelPersonId(e.target.value)}
+                          className={`${inputClass} w-auto flex-1 appearance-none`}
+                        >
+                          <option value="">새 인물 추가...</option>
+                          {allPeople.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name}
+                              {p.role ? ` (${p.role})` : ''}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                       <select
                         value={relType}
                         onChange={(e) => setRelType(e.target.value as RelationshipType)}
@@ -386,13 +462,40 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
                       </select>
                       <button
                         onClick={handleAddRelationship}
-                        disabled={!relTargetId || addingRelationship}
+                        disabled={(relTargetKind === 'artist' ? !relTargetId : !relPersonId) || addingRelationship}
                         className="flex shrink-0 items-center gap-1 rounded-lg border border-black/[0.08] bg-white px-2.5 py-2 text-xs font-medium text-[#4a4038] transition-colors hover:bg-teal/10 disabled:opacity-40"
                       >
                         <Plus className="h-3 w-3" strokeWidth={2.5} />
                         추가
                       </button>
                     </div>
+
+                    {relTargetKind === 'person' && !relPersonId && (
+                      <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-gold/25 bg-gold/[0.06] p-2.5">
+                        <input
+                          value={newPersonName}
+                          onChange={(e) => setNewPersonName(e.target.value)}
+                          placeholder="이름 (예: 테오 반 고흐)"
+                          className={`${inputClass} w-auto flex-1 text-[12.5px]`}
+                        />
+                        <input
+                          value={newPersonRole}
+                          onChange={(e) => setNewPersonRole(e.target.value)}
+                          placeholder="관계 (예: 동생, 배우자, 친구)"
+                          className={`${inputClass} w-auto flex-1 text-[12.5px]`}
+                        />
+                        <button
+                          type="button"
+                          onClick={handleCreatePerson}
+                          disabled={!newPersonName.trim() || creatingPerson}
+                          className="flex shrink-0 items-center gap-1 rounded-lg border border-black/[0.08] bg-white px-2.5 py-2 text-xs font-medium text-[#4a4038] transition-colors hover:bg-gold/10 disabled:opacity-40"
+                        >
+                          {creatingPerson ? <Loader2 className="h-3 w-3 animate-spin" strokeWidth={2.5} /> : <Plus className="h-3 w-3" strokeWidth={2.5} />}
+                          인물 등록
+                        </button>
+                      </div>
+                    )}
+
                     <input
                       value={relDescription}
                       onChange={(e) => setRelDescription(e.target.value)}
@@ -405,7 +508,8 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
                     ) : (
                       <ul className="space-y-1.5">
                         {relationships.map((rel) => {
-                          const other = rel.source_artist_id === id ? rel.target : rel.source;
+                          const isPerson = !!rel.target_person;
+                          const otherName = isPerson ? rel.target_person?.name : (rel.source_artist_id === id ? rel.target : rel.source)?.name;
                           const direction = rel.source_artist_id === id ? '→' : '←';
                           return (
                             <li
@@ -416,7 +520,10 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
                                 {rel.relationship_type}
                               </span>
                               <span className="min-w-0 flex-1 truncate text-[#2a231c]">
-                                {direction} {other?.name ?? '알 수 없음'}
+                                {direction} {otherName ?? '알 수 없음'}
+                                {isPerson && rel.target_person?.role && (
+                                  <span className="text-[#8a8074]"> · {rel.target_person.role}</span>
+                                )}
                                 {rel.description && <span className="text-[#8a8074]"> · {rel.description}</span>}
                               </span>
                               <button

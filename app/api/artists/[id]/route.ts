@@ -13,7 +13,9 @@ export async function GET(_request: NextRequest, { params }: Params) {
       supabase.from('artworks').select('*').eq('artist_id', id).order('year', { ascending: true }),
       supabase
         .from('artist_relationships')
-        .select('*, source:artists!artist_relationships_source_artist_id_fkey(id,name), target:artists!artist_relationships_target_artist_id_fkey(id,name)')
+        .select(
+          '*, source:artists!artist_relationships_source_artist_id_fkey(id,name), target:artists!artist_relationships_target_artist_id_fkey(id,name), target_person:related_people!artist_relationships_target_person_id_fkey(id,name,name_en,role,image_url)'
+        )
         .or(`source_artist_id.eq.${id},target_artist_id.eq.${id}`),
     ]);
 

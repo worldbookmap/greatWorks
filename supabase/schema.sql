@@ -19,11 +19,34 @@ create table if not exists artists (
 create table if not exists artist_relationships (
   id uuid primary key default gen_random_uuid(),
   source_artist_id uuid not null references artists(id) on delete cascade,
-  target_artist_id uuid not null references artists(id) on delete cascade,
+  target_artist_id uuid references artists(id) on delete cascade,
   relationship_type text not null default '기타', -- 사제관계/동료/라이벌/영향을 받음/협업/가족/기타
   description text not null default '',
-  created_at timestamptz not null default now(),
-  constraint artist_relationships_no_self check (source_artist_id <> target_artist_id)
+  created_at timestamptz not null default now()
+);
+
+-- 작가가 아닌 중간 인물(배우자, 친구, 후원자 등)을 관계 대상으로 등록하기 위한 테이블.
+create table if not exists related_people (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  name_en text not null default '',
+  role text not null default '', -- 예: 배우자, 친구, 후원자
+  image_url text,
+  created_at timestamptz not null default now()
+);
+
+-- 기존에 만든 테이블에도 반영되도록 (이미 있으면 무시됨)
+alter table artist_relationships alter column target_artist_id drop not null;
+alter table artist_relationships add column if not exists target_person_id uuid references related_people(id) on delete cascade;
+
+-- 대상은 작가 또는 인물 중 하나만 가리켜야 하고, 작가끼리는 서로 달라야 합니다.
+alter table artist_relationships drop constraint if exists artist_relationships_no_self;
+alter table artist_relationships add constraint artist_relationships_no_self check (
+  target_artist_id is null or source_artist_id <> target_artist_id
+);
+alter table artist_relationships drop constraint if exists artist_relationships_target_one_end;
+alter table artist_relationships add constraint artist_relationships_target_one_end check (
+  (target_artist_id is not null) <> (target_person_id is not null)
 );
 
 create table if not exists artworks (
@@ -70,3 +93,4 @@ create index if not exists artworks_artist_id_idx on artworks(artist_id);
 create index if not exists annotations_artwork_id_idx on annotations(artwork_id);
 create index if not exists artist_relationships_source_idx on artist_relationships(source_artist_id);
 create index if not exists artist_relationships_target_idx on artist_relationships(target_artist_id);
+create index if not exists artist_relationships_target_person_idx on artist_relationships(target_person_id);

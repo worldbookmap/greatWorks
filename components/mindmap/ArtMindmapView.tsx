@@ -17,7 +17,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import dagre from '@dagrejs/dagre';
-import { Palette, Search, User, Waypoints } from 'lucide-react';
+import { Palette, Search, User, UserRound, Waypoints } from 'lucide-react';
 import type { MindmapEdge, MindmapNode } from '@/lib/types';
 import { ArtworkModal } from '@/components/artworks/ArtworkModal';
 import { ArtworkDetailModal } from '@/components/artworks/ArtworkDetailModal';
@@ -27,6 +27,7 @@ import { ArtistDetailModal } from '@/components/artists/ArtistDetailModal';
 const NODE_STYLE: Record<MindmapNode['type'], { icon: typeof User; color: string; ring: string; bg: string }> = {
   artist: { icon: User, color: '#0fb5a8', ring: 'rgba(15,181,168,0.4)', bg: 'rgba(15,181,168,0.08)' },
   artwork: { icon: Palette, color: '#ef3f3f', ring: 'rgba(239,63,63,0.35)', bg: 'rgba(255,107,74,0.08)' },
+  person: { icon: UserRound, color: '#ffb300', ring: 'rgba(255,179,0,0.4)', bg: 'rgba(255,179,0,0.1)' },
 };
 
 function MindmapNodeCard({ data }: NodeProps) {
@@ -172,7 +173,7 @@ export function ArtMindmapView() {
         <div className="mt-2 flex flex-wrap gap-1.5">
           {(Object.keys(NODE_STYLE) as MindmapNode['type'][]).map((type) => {
             const { icon: Icon, color } = NODE_STYLE[type];
-            const labelMap: Record<MindmapNode['type'], string> = { artist: '화가', artwork: '작품' };
+            const labelMap: Record<MindmapNode['type'], string> = { artist: '화가', artwork: '작품', person: '인물' };
             return (
               <span
                 key={type}

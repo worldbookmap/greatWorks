@@ -31,15 +31,26 @@ export const RELATIONSHIP_TYPES: RelationshipType[] = [
   '기타',
 ];
 
+export interface RelatedPerson {
+  id: string;
+  name: string;
+  name_en: string;
+  role: string; // 예: 배우자, 친구, 후원자
+  image_url: string | null;
+  created_at: string;
+}
+
 export interface ArtistRelationship {
   id: string;
   source_artist_id: string;
-  target_artist_id: string;
+  target_artist_id: string | null;
+  target_person_id: string | null;
   relationship_type: RelationshipType;
   description: string;
   created_at: string;
   source?: Artist;
   target?: Artist;
+  target_person?: RelatedPerson;
 }
 
 export interface Artwork {
@@ -81,7 +92,7 @@ export interface ArtworkDetail extends Artwork {
 
 export interface MindmapNode {
   id: string;
-  type: 'artist' | 'artwork';
+  type: 'artist' | 'artwork' | 'person';
   label: string;
   imageUrl?: string | null;
 }
