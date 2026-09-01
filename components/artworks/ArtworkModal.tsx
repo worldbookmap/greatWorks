@@ -23,6 +23,7 @@ import {
 import type { Annotation, Artist, ArtworkDetail } from '@/lib/types';
 import type { WikidataSearchItem, WikidataArtworkDetail } from '@/lib/wikidata';
 import type { PlaceSearchResult } from '@/lib/geocode';
+import { useToast } from '@/components/ui/Toast';
 import { AnnotationLayer } from './AnnotationLayer';
 
 const inputClass =
@@ -105,6 +106,7 @@ interface ArtworkModalProps {
 }
 
 export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: ArtworkModalProps) {
+  const { showToast } = useToast();
   const [id, setId] = useState<string | undefined>(artworkId);
   const [title, setTitle] = useState('');
   const [titleEn, setTitleEn] = useState('');
@@ -386,6 +388,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
         const created = await res.json();
         setId(created.id);
       }
+      showToast('저장되었습니다');
       onSaved();
     } catch (e) {
       setError((e as Error).message);

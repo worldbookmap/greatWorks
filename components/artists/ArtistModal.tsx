@@ -21,6 +21,7 @@ import {
 import type { Artist, ArtistRelationship, Artwork, RelatedPerson, RelationshipType } from '@/lib/types';
 import { RELATIONSHIP_TYPES } from '@/lib/types';
 import type { WikidataArtistDetail, WikidataSearchItem } from '@/lib/wikidata';
+import { useToast } from '@/components/ui/Toast';
 
 const inputClass =
   'w-full rounded-xl border border-black/[0.08] bg-black/[0.02] px-3.5 py-2.5 text-sm text-[#2a231c] placeholder:text-[#a39a8d] outline-none transition-colors focus:border-accent/50 focus:ring-2 focus:ring-accent/20';
@@ -35,6 +36,7 @@ interface ArtistModalProps {
 }
 
 export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwork }: ArtistModalProps) {
+  const { showToast } = useToast();
   const [id, setId] = useState<string | undefined>(artistId);
   const [name, setName] = useState('');
   const [nameEn, setNameEn] = useState('');
@@ -183,6 +185,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
         setId(created.id);
         setAllArtists((prev) => [created, ...prev]);
       }
+      showToast('저장되었습니다');
       onSaved();
     } catch (e) {
       setError((e as Error).message);
