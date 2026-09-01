@@ -16,21 +16,41 @@ const VIEWPORT_MARGIN = 8;
 
 // 마커 옆에 뜨는 핫스팟 정보창이 화면 밖으로 밀려나 잘리지 않도록,
 // 뷰포트 기준으로 위치를 측정해 좌우로 밀어주고 필요하면 위/아래를 뒤집습니다.
-function ClampedPopup({ className, children }: { className: string; children: React.ReactNode }) {
+// 가로 안전 영역은 브라우저 창 전체가 아니라 이미지 컨테이너(boundsRef) 기준으로
+// 계산합니다. 모달 본문은 overflow-y-auto라 세로만 스크롤될 것 같지만, CSS 규칙상
+// 세로 overflow를 auto로 두면 가로 overflow도 암묵적으로 auto가 되어 버려서,
+// 창 너비만 기준으로 클램프하면 모달 폭보다 넓게 밀려난 팝업이 모달 안에서
+// 가로 스크롤로 숨어버리는(=잘려 보이는) 문제가 있었습니다.
+function ClampedPopup({
+  className,
+  boundsRef,
+  children,
+}: {
+  className: string;
+  boundsRef: React.RefObject<HTMLElement | null>;
+  children: React.ReactNode;
+}) {
   const ref = useRef<HTMLDivElement>(null);
-  const [style, setStyle] = useState<React.CSSProperties>({});
+  // 기본값부터 가운데 정렬(-50%)을 적용해야, 아래 effect가 최종 위치를 기준으로
+  // 화면 밖으로 넘어가는지 정확히 측정할 수 있습니다. (미적용 상태로 측정하면
+  // 마커 바로 오른쪽에 붙은 좁은 위치를 기준으로 재게 되어 클램핑이 어긋납니다.)
+  const [style, setStyle] = useState<React.CSSProperties>({ transform: 'translateX(-50%)' });
 
   useLayoutEffect(() => {
     const el = ref.current;
+    const bounds = boundsRef.current?.getBoundingClientRect();
     if (!el) return;
     const rect = el.getBoundingClientRect();
 
+    const minX = Math.max(VIEWPORT_MARGIN, bounds ? bounds.left : VIEWPORT_MARGIN);
+    const maxX = Math.min(window.innerWidth - VIEWPORT_MARGIN, bounds ? bounds.right : window.innerWidth - VIEWPORT_MARGIN);
+
     let shiftX = 0;
-    if (rect.right > window.innerWidth - VIEWPORT_MARGIN) {
-      shiftX -= rect.right - (window.innerWidth - VIEWPORT_MARGIN);
+    if (rect.right > maxX) {
+      shiftX -= rect.right - maxX;
     }
-    if (rect.left + shiftX < VIEWPORT_MARGIN) {
-      shiftX += VIEWPORT_MARGIN - (rect.left + shiftX);
+    if (rect.left + shiftX < minX) {
+      shiftX += minX - (rect.left + shiftX);
     }
 
     const overflowsBottom = rect.bottom > window.innerHeight - VIEWPORT_MARGIN;
@@ -40,7 +60,7 @@ function ClampedPopup({ className, children }: { className: string; children: Re
       transform: `translateX(calc(-50% + ${shiftX}px))`,
       ...(overflowsBottom && !overflowsTop ? { top: 'auto', bottom: '2rem' } : {}),
     });
-  }, []);
+  }, [boundsRef]);
 
   return (
     <div ref={ref} style={style} className={className}>
@@ -54,6 +74,7 @@ export function AnnotationLayer({ imageUrl, annotations, onAdd, onDelete, readOn
   const [pendingText, setPendingText] = useState('');
   const [saving, setSaving] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   function handleImageClick(e: React.MouseEvent<HTMLImageElement>) {
     if (readOnly || !onAdd) return;
@@ -78,7 +99,7 @@ export function AnnotationLayer({ imageUrl, annotations, onAdd, onDelete, readOn
   }
 
   return (
-    <div className="relative rounded-xl bg-black/[0.03]">
+    <div ref={containerRef} className="relative rounded-xl bg-black/[0.03]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={imageUrl}
@@ -105,7 +126,10 @@ export function AnnotationLayer({ imageUrl, annotations, onAdd, onDelete, readOn
             {annotations.indexOf(a) + 1}
           </button>
           {openId === a.id && (
-            <ClampedPopup className="absolute left-1/2 top-8 z-10 w-[min(14rem,calc(100vw-2rem))] rounded-xl border border-black/[0.08] bg-surface p-3 text-left shadow-2xl shadow-black/20">
+            <ClampedPopup
+              boundsRef={containerRef}
+              className="absolute left-1/2 top-8 z-10 w-[min(14rem,calc(100vw-2rem))] rounded-xl border border-black/[0.08] bg-surface p-3 text-left shadow-2xl shadow-black/20"
+            >
               <div className="mb-2 flex items-start justify-between gap-2">
                 <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-[#2a231c]">{a.text}</p>
                 {!readOnly && onDelete && (
@@ -132,6 +156,8 @@ export function AnnotationLayer({ imageUrl, annotations, onAdd, onDelete, readOn
         >
           <div className="h-6 w-6 rounded-full border-2 border-white bg-teal shadow-lg shadow-black/30" />
           <ClampedPopup
+            key={`${pendingPos.x}-${pendingPos.y}`}
+            boundsRef={containerRef}
             className="absolute left-1/2 top-8 z-10 w-[min(15rem,calc(100vw-2rem))] space-y-2 rounded-xl border border-black/[0.08] bg-surface p-3 shadow-2xl shadow-black/20"
           >
             <div onClick={(e) => e.stopPropagation()} className="space-y-2">
