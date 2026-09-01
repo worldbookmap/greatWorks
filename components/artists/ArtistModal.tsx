@@ -201,8 +201,29 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
     if (res.ok) onDeleted();
   }
 
+  // 대상 작가/인물 중 하나를 지정해 현재 작가와의 관계를 만듭니다.
+  async function createRelationship(targetArtistId: string | null, targetPersonId: string | null) {
+    const res = await fetch('/api/relationships', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        source_artist_id: id,
+        target_artist_id: targetArtistId,
+        target_person_id: targetPersonId,
+        relationship_type: relType,
+        description: relDescription,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      throw new Error(body?.error ?? '관계 추가에 실패했습니다.');
+    }
+  }
+
+  // 새 인물은 등록과 동시에 현재 작가와의 관계도 함께 만들어야, 등록만 하고
+  // 연결(마인드맵 표시)을 놓치는 일이 없습니다.
   async function handleCreatePerson() {
-    if (!newPersonName.trim()) return;
+    if (!newPersonName.trim() || !id) return;
     setCreatingPerson(true);
     setError(null);
     try {
@@ -214,9 +235,14 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
       if (!res.ok) throw new Error('인물 등록에 실패했습니다.');
       const created: RelatedPerson = await res.json();
       setAllPeople((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name, 'ko')));
-      setRelPersonId(created.id);
+
+      await createRelationship(null, created.id);
+
       setNewPersonName('');
       setNewPersonRole('');
+      setRelPersonId('');
+      setRelDescription('');
+      await refreshDetail(id);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -230,26 +256,16 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
     if (relTargetKind === 'person' && !relPersonId) return;
     setAddingRelationship(true);
     setError(null);
-    const res = await fetch('/api/relationships', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        source_artist_id: id,
-        target_artist_id: relTargetKind === 'artist' ? relTargetId : null,
-        target_person_id: relTargetKind === 'person' ? relPersonId : null,
-        relationship_type: relType,
-        description: relDescription,
-      }),
-    });
-    setAddingRelationship(false);
-    if (res.ok) {
+    try {
+      await createRelationship(relTargetKind === 'artist' ? relTargetId : null, relTargetKind === 'person' ? relPersonId : null);
       setRelTargetId('');
       setRelPersonId('');
       setRelDescription('');
       await refreshDetail(id);
-    } else {
-      const body = await res.json().catch(() => null);
-      setError(body?.error ?? '관계 추가에 실패했습니다.');
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setAddingRelationship(false);
     }
   }
 
@@ -494,7 +510,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
                           className="flex shrink-0 items-center gap-1 rounded-lg border border-black/[0.08] bg-white px-2.5 py-2 text-xs font-medium text-[#4a4038] transition-colors hover:bg-gold/10 disabled:opacity-40"
                         >
                           {creatingPerson ? <Loader2 className="h-3 w-3 animate-spin" strokeWidth={2.5} /> : <Plus className="h-3 w-3" strokeWidth={2.5} />}
-                          인물 등록
+                          인물 추가
                         </button>
                       </div>
                     )}
