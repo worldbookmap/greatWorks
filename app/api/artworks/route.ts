@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { toFuzzyIlikePattern } from '@/lib/search';
+import { sanitizeSearchTerm } from '@/lib/search';
 
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get('q')?.trim();
@@ -13,9 +13,17 @@ export async function GET(request: NextRequest) {
     .order('title', { ascending: true });
 
   if (artistId) query = query.eq('artist_id', artistId);
+
   if (q) {
-    const pattern = toFuzzyIlikePattern(q);
-    query = query.or(`title.ilike.${pattern},collection_name.ilike.${pattern}`);
+    // 검색어를 단어로 나눠, 각 단어가 작가명/작품명/소장처 중 어디에든
+    // 있으면 매칭시킨다 (예: "고흐 별이" -> 작가명의 "고흐" + 작품명의 "별이").
+    const words = sanitizeSearchTerm(q).split(/\s+/).filter(Boolean);
+    const { data: matches, error: matchError } = await supabase.rpc('search_artworks_fuzzy', { words });
+    if (matchError) return NextResponse.json({ error: matchError.message }, { status: 500 });
+
+    const ids = (matches ?? []).map((a: { id: string }) => a.id);
+    if (ids.length === 0) return NextResponse.json([]);
+    query = query.in('id', ids);
   }
 
   const { data, error } = await query;

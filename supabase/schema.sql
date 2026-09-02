@@ -94,3 +94,27 @@ create index if not exists annotations_artwork_id_idx on annotations(artwork_id)
 create index if not exists artist_relationships_source_idx on artist_relationships(source_artist_id);
 create index if not exists artist_relationships_target_idx on artist_relationships(target_artist_id);
 create index if not exists artist_relationships_target_person_idx on artist_relationships(target_person_id);
+
+-- 작품 검색어를 공백으로 나눠, 각 단어가 작가명/작품명/소장처 중
+-- "어디에든" 있으면 매칭되게 합니다. 예: "고흐 별이" -> "고흐"는 작가명에서,
+-- "별이"는 작품명에서 각각 찾아도 매칭됩니다 (단어별 OR-필드, 단어끼리는 AND).
+create or replace function search_artworks_fuzzy(words text[])
+returns setof artworks
+language sql
+stable
+as $$
+  select a.*
+  from artworks a
+  left join artists ar on ar.id = a.artist_id
+  where not exists (
+    select 1 from unnest(words) as w
+    where not (
+      a.title ilike '%' || w || '%'
+      or a.title_en ilike '%' || w || '%'
+      or a.collection_name ilike '%' || w || '%'
+      or a.collection_name_en ilike '%' || w || '%'
+      or coalesce(ar.name, '') ilike '%' || w || '%'
+      or coalesce(ar.name_en, '') ilike '%' || w || '%'
+    )
+  );
+$$;
