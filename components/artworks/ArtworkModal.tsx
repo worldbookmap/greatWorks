@@ -21,8 +21,11 @@ import {
   X,
 } from 'lucide-react';
 import type { Annotation, Artist, ArtworkDetail } from '@/lib/types';
-import type { WikidataSearchItem, WikidataArtworkDetail } from '@/lib/wikidata';
+import type { WikidataArtworkDetail, WikidataSearchItem } from '@/lib/wikidata';
 import type { WikipediaSearchItem, WikipediaArtworkDetail } from '@/lib/wikipedia';
+import type { UnifiedArtworkSearchItem } from '@/lib/artworkSearch';
+import type { AicArtworkDetail } from '@/lib/aic';
+import type { MetArtworkDetail } from '@/lib/met';
 import type { PlaceSearchResult } from '@/lib/geocode';
 import { useToast } from '@/components/ui/Toast';
 import { AnnotationLayer } from './AnnotationLayer';
@@ -30,6 +33,17 @@ import { AnnotationLayer } from './AnnotationLayer';
 const inputClass =
   'w-full rounded-xl border border-black/[0.08] bg-black/[0.02] px-3.5 py-2.5 text-sm text-[#2a231c] placeholder:text-[#a39a8d] outline-none transition-colors focus:border-accent/50 focus:ring-2 focus:ring-accent/20';
 const labelClass = 'mb-1.5 flex items-center gap-1.5 text-[13px] font-medium text-[#4a4038]';
+
+const SOURCE_LABEL: Record<'wikidata' | 'aic' | 'met', string> = {
+  wikidata: 'Wikidata',
+  aic: '시카고',
+  met: 'Met',
+};
+const SOURCE_BADGE: Record<'wikidata' | 'aic' | 'met', string> = {
+  wikidata: 'bg-teal/15 text-teal',
+  aic: 'bg-accent/15 text-accent-strong',
+  met: 'bg-gold/15 text-gold',
+};
 
 interface QuickArtworkEntry {
   title?: string;
@@ -136,11 +150,11 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [wdQuery, setWdQuery] = useState('');
-  const [wdResults, setWdResults] = useState<WikidataSearchItem[]>([]);
-  const [wdSearching, setWdSearching] = useState(false);
-  const [wdApplying, setWdApplying] = useState<string | null>(null);
-  const [wdSearched, setWdSearched] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<UnifiedArtworkSearchItem[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [applyingKey, setApplyingKey] = useState<string | null>(null);
+  const [searched, setSearched] = useState(false);
 
   const [wpResults, setWpResults] = useState<WikipediaSearchItem[]>([]);
   const [wpSearching, setWpSearching] = useState(false);
@@ -197,70 +211,93 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
     if (res.ok) setAnnotations(await res.json());
   }
 
-  async function handleSearchWikidata() {
-    if (!wdQuery.trim()) return;
-    setWdSearching(true);
-    setWdResults([]);
-    setWdSearched(false);
+  // 검색 결과의 작가명을 기존 등록된 작가와 매칭하거나, 새로 등록하도록 제안한다.
+  function applyArtistName(name: string) {
+    if (!name) return;
+    const match = artists.find((a) => a.name.trim().toLowerCase() === name.trim().toLowerCase());
+    if (match) {
+      setArtistId(match.id);
+      setSuggestedArtistName(null);
+    } else {
+      setArtistId('');
+      setSuggestedArtistName(name);
+    }
+  }
+
+  async function handleSearchArtworks() {
+    if (!searchQuery.trim()) return;
+    setSearching(true);
+    setSearchResults([]);
+    setSearched(false);
     setWpResults([]);
     setWpSearched(false);
-    const res = await fetch(`/api/wikidata/search-artwork?q=${encodeURIComponent(wdQuery)}`);
-    const results: WikidataSearchItem[] = res.ok ? await res.json() : [];
-    setWdResults(results);
-    setWdSearching(false);
-    setWdSearched(true);
+    const res = await fetch(`/api/artwork-search?q=${encodeURIComponent(searchQuery)}`);
+    const results: UnifiedArtworkSearchItem[] = res.ok ? await res.json() : [];
+    setSearchResults(results);
+    setSearching(false);
+    setSearched(true);
 
-    // Wikidata에 없으면 위키백과에서 한 번 더 찾아본다.
+    // Wikidata/AIC/Met 어디에도 없으면 위키백과에서 한 번 더 찾아본다.
     if (results.length === 0) await handleSearchWikipedia();
   }
 
   async function handleSearchWikipedia() {
     setWpSearching(true);
     setWpResults([]);
-    const res = await fetch(`/api/wikipedia/search-artwork?q=${encodeURIComponent(wdQuery)}`);
+    const res = await fetch(`/api/wikipedia/search-artwork?q=${encodeURIComponent(searchQuery)}`);
     if (res.ok) setWpResults(await res.json());
     setWpSearching(false);
     setWpSearched(true);
   }
 
-  async function handleApplyWikidataResult(item: WikidataSearchItem) {
-    setWdApplying(item.id);
+  async function handleApplySearchResult(item: UnifiedArtworkSearchItem) {
+    const key = `${item.source}:${item.id}`;
+    setApplyingKey(key);
     setError(null);
     try {
-      const res = await fetch(`/api/wikidata/artwork/${item.id}`);
-      if (!res.ok) throw new Error('작품 정보를 가져오지 못했습니다.');
-      const detail: WikidataArtworkDetail = await res.json();
+      if (item.source === 'wikidata') {
+        const res = await fetch(`/api/wikidata/artwork/${item.id}`);
+        if (!res.ok) throw new Error('작품 정보를 가져오지 못했습니다.');
+        const detail: WikidataArtworkDetail = await res.json();
 
-      setTitle(detail.title || item.label);
-      setTitleEn(detail.titleEn);
-      setYear(detail.year != null ? String(detail.year) : '');
-      setCollectionName(detail.collectionName);
-      setCollectionNameEn(detail.collectionNameEn);
-      setLat(detail.lat);
-      setLng(detail.lng);
-      if (detail.imageUrl) setImageUrl(detail.imageUrl);
-      if (detail.medium) setMedium(detail.medium);
-      setMediumEn(detail.mediumEn);
-      if (detail.dimensions) setDimensions(detail.dimensions);
-      setWikidataId(detail.wikidataId);
+        setTitle(detail.title || item.label);
+        setTitleEn(detail.titleEn);
+        setYear(detail.year != null ? String(detail.year) : '');
+        setCollectionName(detail.collectionName);
+        setCollectionNameEn(detail.collectionNameEn);
+        setLat(detail.lat);
+        setLng(detail.lng);
+        if (detail.imageUrl) setImageUrl(detail.imageUrl);
+        if (detail.medium) setMedium(detail.medium);
+        setMediumEn(detail.mediumEn);
+        if (detail.dimensions) setDimensions(detail.dimensions);
+        setWikidataId(detail.wikidataId);
+        applyArtistName(detail.artistName);
+      } else {
+        const endpoint = item.source === 'aic' ? `/api/aic/artwork/${item.id}` : `/api/met/artwork/${item.id}`;
+        const res = await fetch(endpoint);
+        if (!res.ok) throw new Error('작품 정보를 가져오지 못했습니다.');
+        const detail: AicArtworkDetail | MetArtworkDetail = await res.json();
 
-      if (detail.artistName) {
-        const match = artists.find((a) => a.name.trim().toLowerCase() === detail.artistName.trim().toLowerCase());
-        if (match) {
-          setArtistId(match.id);
-          setSuggestedArtistName(null);
-        } else {
-          setArtistId('');
-          setSuggestedArtistName(detail.artistName);
-        }
+        setTitle(detail.title || item.label);
+        setYear(detail.year != null ? String(detail.year) : '');
+        setYearDisplay(detail.year != null ? '' : detail.yearDisplay);
+        setCollectionName(detail.collectionName);
+        setLat(detail.lat);
+        setLng(detail.lng);
+        if (detail.imageUrl) setImageUrl(detail.imageUrl);
+        if (detail.medium) setMedium(detail.medium);
+        if (detail.dimensions) setDimensions(detail.dimensions);
+        setWikidataId('');
+        applyArtistName(detail.artistName);
       }
 
-      setWdResults([]);
-      setWdQuery('');
+      setSearchResults([]);
+      setSearchQuery('');
     } catch (e) {
       setError((e as Error).message);
     } finally {
-      setWdApplying(null);
+      setApplyingKey(null);
     }
   }
 
@@ -277,7 +314,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
       if (detail.description) setDescription(detail.description);
 
       setWpResults([]);
-      setWdQuery('');
+      setSearchQuery('');
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -296,16 +333,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
     if (parsed.dimensions) setDimensions(parsed.dimensions);
     if (parsed.collectionName) setCollectionName(parsed.collectionName);
 
-    if (parsed.artistName) {
-      const match = artists.find((a) => a.name.trim().toLowerCase() === parsed.artistName!.trim().toLowerCase());
-      if (match) {
-        setArtistId(match.id);
-        setSuggestedArtistName(null);
-      } else {
-        setArtistId('');
-        setSuggestedArtistName(parsed.artistName);
-      }
-    }
+    if (parsed.artistName) applyArtistName(parsed.artistName);
   }
 
   async function handleCreateSuggestedArtist() {
@@ -519,53 +547,63 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
                 <div className="rounded-xl border border-teal/25 bg-teal/[0.06] p-3.5">
                   <label className={labelClass}>
                     <Search className="h-3.5 w-3.5 text-teal" strokeWidth={2.25} />
-                    Wikidata에서 작품 검색 (이름/작가/연도/소장처/이미지 자동 입력)
+                    통합 검색 — Wikidata · 시카고 미술관 · 메트로폴리탄 미술관 (이름/작가/연도/소장처/이미지 자동 입력)
                   </label>
                   <div className="flex gap-2">
                     <input
-                      value={wdQuery}
-                      onChange={(e) => setWdQuery(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSearchWikidata()}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSearchArtworks()}
                       placeholder="예: Mona Lisa, 별이 빛나는 밤"
                       className={inputClass}
                     />
                     <button
-                      onClick={handleSearchWikidata}
-                      disabled={wdSearching}
+                      onClick={handleSearchArtworks}
+                      disabled={searching}
                       className="shrink-0 rounded-xl border border-black/[0.08] bg-white px-4 py-2 text-sm font-medium text-[#4a4038] transition-colors hover:bg-black/[0.03] disabled:opacity-40"
                     >
-                      {wdSearching ? <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.25} /> : '검색'}
+                      {searching ? <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.25} /> : '검색'}
                     </button>
                   </div>
-                  {wdResults.length > 0 && (
+                  {searchResults.length > 0 && (
                     <ul className="mt-2.5 max-h-52 space-y-1 overflow-y-auto rounded-xl border border-black/[0.06] bg-white p-1.5">
-                      {wdResults.map((item) => (
-                        <li key={item.id}>
-                          <button
-                            onClick={() => handleApplyWikidataResult(item)}
-                            disabled={wdApplying === item.id}
-                            className="flex w-full items-start gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-teal/10 disabled:opacity-50"
-                          >
-                            {wdApplying === item.id ? (
-                              <Loader2 className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin text-teal" strokeWidth={2.25} />
-                            ) : (
-                              <Wand2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal" strokeWidth={2.25} />
-                            )}
-                            <span className="min-w-0">
-                              <span className="block truncate font-medium text-[#2a231c]">{item.label}</span>
-                              {item.description && (
-                                <span className="block truncate text-xs text-[#8a8074]">{item.description}</span>
+                      {searchResults.map((item) => {
+                        const key = `${item.source}:${item.id}`;
+                        return (
+                          <li key={key}>
+                            <button
+                              onClick={() => handleApplySearchResult(item)}
+                              disabled={applyingKey === key}
+                              className="flex w-full items-start gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-teal/10 disabled:opacity-50"
+                            >
+                              {applyingKey === key ? (
+                                <Loader2 className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin text-teal" strokeWidth={2.25} />
+                              ) : (
+                                <Wand2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal" strokeWidth={2.25} />
                               )}
-                            </span>
-                          </button>
-                        </li>
-                      ))}
+                              <span className="min-w-0">
+                                <span className="flex items-center gap-1.5">
+                                  <span
+                                    className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${SOURCE_BADGE[item.source]}`}
+                                  >
+                                    {SOURCE_LABEL[item.source]}
+                                  </span>
+                                  <span className="truncate font-medium text-[#2a231c]">{item.label}</span>
+                                </span>
+                                {item.description && (
+                                  <span className="block truncate text-xs text-[#8a8074]">{item.description}</span>
+                                )}
+                              </span>
+                            </button>
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
                 </div>
               )}
 
-              {!id && wdSearched && wdResults.length === 0 && (
+              {!id && searched && searchResults.length === 0 && (
                 <div className="rounded-xl border border-gold/25 bg-gold/[0.06] p-3.5">
                   <label className={labelClass}>
                     <Search className="h-3.5 w-3.5 text-gold" strokeWidth={2.25} />

@@ -85,11 +85,21 @@ export async function searchArtworks(query: string, limit = 8): Promise<Wikidata
   if (ids.length === 0) return searchEntities(query, limit);
 
   const entities = await getEntities(ids);
-  return ids.map((id) => ({
-    id,
-    label: labelOf(entities[id]) || id,
-    description: descriptionOf(entities[id]),
-  }));
+  const creatorIds = ids
+    .map((id) => entityIdOf(entities[id]?.claims, 'P170'))
+    .filter((v): v is string => !!v);
+  const creators = await getEntities([...new Set(creatorIds)]);
+
+  // 표준 작품 정보 표기법: "작가명, <작품명>, 제작연도"
+  return ids.map((id) => {
+    const entity = entities[id];
+    const title = labelOf(entity) || id;
+    const creatorId = entityIdOf(entity?.claims, 'P170');
+    const artist = creatorId ? labelOf(creators[creatorId]) : '';
+    const year = yearOf(entity?.claims, 'P571');
+    const label = [artist, `<${title}>`, year != null ? String(year) : ''].filter(Boolean).join(', ');
+    return { id, label, description: descriptionOf(entity) };
+  });
 }
 
 async function getEntities(ids: string[]): Promise<Record<string, WikidataEntity>> {
