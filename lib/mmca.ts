@@ -28,21 +28,31 @@ export interface MmcaSearchItem {
   description: string;
 }
 
-// 표준 작품 정보 표기법: "작가명, <작품명>, 제작연도"
-export async function searchMmcaArtworks(query: string, limit = 5): Promise<MmcaSearchItem[]> {
-  const q = query.trim();
-  if (!q) return [];
-
+async function fetchListItems(searchText: string): Promise<MmcaListItem[]> {
   const res = await fetch(LIST_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8', 'User-Agent': USER_AGENT },
-    body: new URLSearchParams({ searchText: q, pageIndex: '1' }),
+    body: new URLSearchParams({ searchText, pageIndex: '1' }),
   });
   if (!res.ok) throw new Error(`국립현대미술관 요청에 실패했습니다 (${res.status}).`);
   const data: { collectionsList?: MmcaListItem[] } = await res.json();
-  const items = data.collectionsList ?? [];
+  return data.collectionsList ?? [];
+}
 
-  return items.slice(0, limit).map((i) => {
+// 표준 작품 정보 표기법: "작가명, <작품명>, 제작연도"
+export async function searchMmcaArtworks(query: string, limit = 5): Promise<MmcaSearchItem[]> {
+  const words = query.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return [];
+
+  // MMCA 자체 검색은 단어를 하나만 받아들이고, 공백으로 여러 단어를 함께
+  // 넣으면(예: "이불 사이보그") 그대로 0건을 반환한다. 단어별로 따로 검색한 뒤
+  // 모든 단어를 만족하는 항목만 남겨, "작가명 일부 + 작품명 일부" 조합도 찾히게 한다.
+  const resultsPerWord = await Promise.all(words.map((w) => fetchListItems(w)));
+  const [first, ...rest] = resultsPerWord;
+  const restIdSets = rest.map((items) => new Set(items.map((i) => i.wrkinfoSeqno)));
+  const merged = first.filter((item) => restIdSets.every((idSet) => idSet.has(item.wrkinfoSeqno)));
+
+  return merged.slice(0, limit).map((i) => {
     const label = [i.artistnm, `<${i.wrkNm}>`, i.wrkProdTermRangeTextKor].filter(Boolean).join(', ');
     const description = [i.artistnmEng, i.wrkNmEng].filter(Boolean).join(' · ');
     return { id: `${i.museumId}-${i.wrkinfoSeqno}`, label, description };
