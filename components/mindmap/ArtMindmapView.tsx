@@ -378,8 +378,14 @@ export function ArtMindmapView() {
       )}
 
       {pendingConnection && (
-        <div className="fixed inset-0 z-[3500] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl border border-black/[0.08] bg-surface p-5 shadow-2xl shadow-black/20">
+        <div
+          className="fixed inset-0 z-[3500] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+          onClick={() => setPendingConnection(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl border border-black/[0.08] bg-surface p-5 shadow-2xl shadow-black/20"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="mb-3 flex items-center justify-between gap-2">
               <h3 className="flex items-center gap-1.5 text-[14px] font-semibold text-[#2a231c]">
                 <Link2 className="h-4 w-4 text-teal" strokeWidth={2.25} />

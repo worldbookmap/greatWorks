@@ -282,8 +282,14 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
   const otherArtists = allArtists.filter((a) => a.id !== id);
 
   return (
-    <div className="fixed inset-0 z-[3500] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-      <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-black/[0.08] bg-surface shadow-2xl shadow-black/20">
+    <div
+      className="fixed inset-0 z-[3500] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-black/[0.08] bg-surface shadow-2xl shadow-black/20"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex shrink-0 items-center justify-between gap-2 border-b border-black/[0.06] px-4 sm:px-6 py-4">
           <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#2a231c]">
             <User className="h-4 w-4 text-accent-strong" strokeWidth={2.25} />
