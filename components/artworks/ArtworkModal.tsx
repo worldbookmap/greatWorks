@@ -26,6 +26,7 @@ import type { WikipediaSearchItem, WikipediaArtworkDetail } from '@/lib/wikipedi
 import type { UnifiedArtworkSearchItem } from '@/lib/artworkSearch';
 import type { AicArtworkDetail } from '@/lib/aic';
 import type { MetArtworkDetail } from '@/lib/met';
+import type { MmcaArtworkDetail } from '@/lib/mmca';
 import type { PlaceSearchResult } from '@/lib/geocode';
 import { useToast } from '@/components/ui/Toast';
 import { AnnotationLayer } from './AnnotationLayer';
@@ -34,15 +35,17 @@ const inputClass =
   'w-full rounded-xl border border-black/[0.08] bg-black/[0.02] px-3.5 py-2.5 text-sm text-[#2a231c] placeholder:text-[#a39a8d] outline-none transition-colors focus:border-accent/50 focus:ring-2 focus:ring-accent/20';
 const labelClass = 'mb-1.5 flex items-center gap-1.5 text-[13px] font-medium text-[#4a4038]';
 
-const SOURCE_LABEL: Record<'wikidata' | 'aic' | 'met', string> = {
+const SOURCE_LABEL: Record<'wikidata' | 'aic' | 'met' | 'mmca', string> = {
   wikidata: 'Wikidata',
   aic: '시카고',
   met: 'Met',
+  mmca: '국현',
 };
-const SOURCE_BADGE: Record<'wikidata' | 'aic' | 'met', string> = {
+const SOURCE_BADGE: Record<'wikidata' | 'aic' | 'met' | 'mmca', string> = {
   wikidata: 'bg-teal/15 text-teal',
   aic: 'bg-accent/15 text-accent-strong',
   met: 'bg-gold/15 text-gold',
+  mmca: 'bg-red-500/15 text-red-600',
 };
 
 interface QuickArtworkEntry {
@@ -272,6 +275,18 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
         setMediumEn(detail.mediumEn);
         if (detail.dimensions) setDimensions(detail.dimensions);
         setWikidataId(detail.wikidataId);
+        applyArtistName(detail.artistName);
+      } else if (item.source === 'mmca') {
+        const res = await fetch(`/api/mmca/artwork/${item.id}`);
+        if (!res.ok) throw new Error('작품 정보를 가져오지 못했습니다.');
+        const detail: MmcaArtworkDetail = await res.json();
+
+        setTitle(detail.title || item.label);
+        setCollectionName(detail.collectionName);
+        setLat(detail.lat);
+        setLng(detail.lng);
+        if (detail.description) setDescription(detail.description);
+        setWikidataId('');
         applyArtistName(detail.artistName);
       } else {
         const endpoint = item.source === 'aic' ? `/api/aic/artwork/${item.id}` : `/api/met/artwork/${item.id}`;
@@ -547,7 +562,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
                 <div className="rounded-xl border border-teal/25 bg-teal/[0.06] p-3.5">
                   <label className={labelClass}>
                     <Search className="h-3.5 w-3.5 text-teal" strokeWidth={2.25} />
-                    통합 검색 — Wikidata · 시카고 미술관 · 메트로폴리탄 미술관 (이름/작가/연도/소장처/이미지 자동 입력)
+                    통합 검색 — Wikidata · 국립현대미술관 · 시카고 미술관 · 메트로폴리탄 미술관 (이름/작가/연도/소장처/이미지 자동 입력)
                   </label>
                   <div className="flex gap-2">
                     <input
