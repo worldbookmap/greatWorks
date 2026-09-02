@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ImageOff, LayoutGrid, List, Plus, Search, User } from 'lucide-react';
 import type { Artist } from '@/lib/types';
+import { Pagination } from '@/components/ui/Pagination';
 import { ArtworkModal } from '@/components/artworks/ArtworkModal';
 import { ArtworkDetailModal } from '@/components/artworks/ArtworkDetailModal';
 import { ArtistModal } from './ArtistModal';
@@ -10,6 +11,7 @@ import { ArtistDetailModal } from './ArtistDetailModal';
 
 type ViewMode = 'grid' | 'list';
 const VIEW_MODE_KEY = 'artists-view-mode';
+const PAGE_SIZE = 15;
 
 export function ArtistsView() {
   const [artists, setArtists] = useState<Artist[]>([]);
@@ -20,6 +22,7 @@ export function ArtistsView() {
   const [detailArtworkId, setDetailArtworkId] = useState<string | null>(null);
   const [editArtworkId, setEditArtworkId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [page, setPage] = useState(1);
 
   const load = useCallback(async () => {
     const res = await fetch('/api/artists' + (search ? `?q=${encodeURIComponent(search)}` : ''));
@@ -29,6 +32,14 @@ export function ArtistsView() {
   useEffect(() => {
     load().finally(() => setLoading(false));
   }, [load]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
+  const totalPages = Math.max(1, Math.ceil(artists.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedArtists = artists.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   useEffect(() => {
     const saved = localStorage.getItem(VIEW_MODE_KEY);
@@ -93,7 +104,7 @@ export function ArtistsView() {
         </div>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {artists.map((a) => (
+          {pagedArtists.map((a) => (
             <button
               key={a.id}
               onClick={() => setDetailArtistId(a.id)}
@@ -123,7 +134,7 @@ export function ArtistsView() {
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          {artists.map((a) => (
+          {pagedArtists.map((a) => (
             <button
               key={a.id}
               onClick={() => setDetailArtistId(a.id)}
@@ -152,6 +163,8 @@ export function ArtistsView() {
           ))}
         </div>
       )}
+
+      <Pagination page={currentPage} totalPages={totalPages} onChange={setPage} />
 
       {detailArtistId && (
         <ArtistDetailModal

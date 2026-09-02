@@ -22,6 +22,7 @@ import { Link2, Loader2, Palette, Search, TriangleAlert, User, UserRound, Waypoi
 import type { MindmapEdge, MindmapNode, RelationshipType } from '@/lib/types';
 import { RELATIONSHIP_TYPES } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
+import { normalizeForMatch } from '@/lib/search';
 import { ArtworkModal } from '@/components/artworks/ArtworkModal';
 import { ArtworkDetailModal } from '@/components/artworks/ArtworkDetailModal';
 import { ArtistModal } from '@/components/artists/ArtistModal';
@@ -134,11 +135,11 @@ export function ArtMindmapView() {
   }, []);
 
   const nodes = useMemo(() => {
-    const term = search.trim().toLowerCase();
+    const term = normalizeForMatch(search);
     if (!term) return positionedNodes;
     return positionedNodes.map((n) => {
       const original = rawNodes.find((r) => r.id === n.id);
-      const matches = original?.label.toLowerCase().includes(term) ?? false;
+      const matches = normalizeForMatch(original?.label ?? '').includes(term);
       return { ...n, data: { ...n.data, dimmed: !matches } };
     });
   }, [positionedNodes, rawNodes, search]);

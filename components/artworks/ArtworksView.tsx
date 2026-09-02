@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ImageOff, LayoutGrid, List, Palette, Plus, Search } from 'lucide-react';
 import type { Artwork } from '@/lib/types';
+import { Pagination } from '@/components/ui/Pagination';
 import { ArtworkModal } from './ArtworkModal';
 import { ArtworkDetailModal } from './ArtworkDetailModal';
 
 type ViewMode = 'grid' | 'list';
 const VIEW_MODE_KEY = 'artworks-view-mode';
+const PAGE_SIZE = 15;
 
 export function ArtworksView() {
   const [artworks, setArtworks] = useState<Artwork[]>([]);
@@ -16,6 +18,7 @@ export function ArtworksView() {
   const [detailArtworkId, setDetailArtworkId] = useState<string | null>(null);
   const [editState, setEditState] = useState<{ artworkId?: string } | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [page, setPage] = useState(1);
 
   const load = useCallback(async () => {
     const res = await fetch('/api/artworks' + (search ? `?q=${encodeURIComponent(search)}` : ''));
@@ -25,6 +28,14 @@ export function ArtworksView() {
   useEffect(() => {
     load().finally(() => setLoading(false));
   }, [load]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
+  const totalPages = Math.max(1, Math.ceil(artworks.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedArtworks = artworks.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   useEffect(() => {
     const saved = localStorage.getItem(VIEW_MODE_KEY);
@@ -84,7 +95,7 @@ export function ArtworksView() {
         </div>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {artworks.map((art) => (
+          {pagedArtworks.map((art) => (
             <button
               key={art.id}
               onClick={() => setDetailArtworkId(art.id)}
@@ -114,7 +125,7 @@ export function ArtworksView() {
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          {artworks.map((art) => (
+          {pagedArtworks.map((art) => (
             <button
               key={art.id}
               onClick={() => setDetailArtworkId(art.id)}
@@ -139,6 +150,8 @@ export function ArtworksView() {
           ))}
         </div>
       )}
+
+      <Pagination page={currentPage} totalPages={totalPages} onChange={setPage} />
 
       {detailArtworkId && (
         <ArtworkDetailModal

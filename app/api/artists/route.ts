@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { sanitizeSearchTerm } from '@/lib/search';
+import { toFuzzyIlikePattern } from '@/lib/search';
 
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get('q')?.trim();
 
   let query = supabase.from('artists').select('*').order('name', { ascending: true });
   if (q) {
-    const term = sanitizeSearchTerm(q);
-    query = query.or(`name.ilike.%${term}%,nationality.ilike.%${term}%,movement.ilike.%${term}%`);
+    const pattern = toFuzzyIlikePattern(q);
+    query = query.or(`name.ilike.${pattern},nationality.ilike.${pattern},movement.ilike.${pattern}`);
   }
 
   const { data, error } = await query;

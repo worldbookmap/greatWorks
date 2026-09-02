@@ -29,6 +29,7 @@ import type { MetArtworkDetail } from '@/lib/met';
 import type { MmcaArtworkDetail } from '@/lib/mmca';
 import type { PlaceSearchResult } from '@/lib/geocode';
 import { useToast } from '@/components/ui/Toast';
+import { normalizeForMatch } from '@/lib/search';
 import { AnnotationLayer } from './AnnotationLayer';
 
 const inputClass =
@@ -217,7 +218,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
   // 검색 결과의 작가명을 기존 등록된 작가와 매칭하거나, 새로 등록하도록 제안한다.
   function applyArtistName(name: string) {
     if (!name) return;
-    const match = artists.find((a) => a.name.trim().toLowerCase() === name.trim().toLowerCase());
+    const match = artists.find((a) => normalizeForMatch(a.name) === normalizeForMatch(name));
     if (match) {
       setArtistId(match.id);
       setSuggestedArtistName(null);
