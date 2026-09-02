@@ -508,6 +508,16 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
     if (res.ok) await refreshAnnotations(id);
   }
 
+  async function handleEditAnnotation(annotationId: string, text: string) {
+    if (!id) return;
+    const res = await fetch(`/api/annotations/${annotationId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+    if (res.ok) await refreshAnnotations(id);
+  }
+
   async function handleDeleteAnnotation(annotationId: string) {
     if (!id) return;
     const res = await fetch(`/api/annotations/${annotationId}`, { method: 'DELETE' });
@@ -864,6 +874,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
                       imageUrl={imageUrl}
                       annotations={annotations}
                       onAdd={handleAddAnnotation}
+                      onEdit={handleEditAnnotation}
                       onDelete={handleDeleteAnnotation}
                     />
                   </>

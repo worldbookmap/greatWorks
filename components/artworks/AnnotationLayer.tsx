@@ -1,13 +1,14 @@
 'use client';
 
 import { useLayoutEffect, useRef, useState } from 'react';
-import { Save, Trash2, X } from 'lucide-react';
+import { Pencil, Save, Trash2, X } from 'lucide-react';
 import type { Annotation } from '@/lib/types';
 
 interface AnnotationLayerProps {
   imageUrl: string;
   annotations: Annotation[];
   onAdd?: (xPct: number, yPct: number, text: string) => Promise<void>;
+  onEdit?: (id: string, text: string) => Promise<void>;
   onDelete?: (id: string) => void;
   readOnly?: boolean;
   showMarkers?: boolean;
@@ -74,6 +75,7 @@ export function AnnotationLayer({
   imageUrl,
   annotations,
   onAdd,
+  onEdit,
   onDelete,
   readOnly = false,
   showMarkers = true,
@@ -81,16 +83,59 @@ export function AnnotationLayer({
   const [pendingPos, setPendingPos] = useState<{ x: number; y: number } | null>(null);
   const [pendingText, setPendingText] = useState('');
   const [saving, setSaving] = useState(false);
-  const [openId, setOpenId] = useState<string | null>(null);
+  // 여러 핫스팟 설명을 동시에 열어둘 수 있도록 단일 id 대신 집합으로 관리합니다.
+  const [openIds, setOpenIds] = useState<Set<string>>(new Set());
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  function toggleOpen(id: string) {
+    setOpenIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function closeOne(id: string) {
+    setOpenIds((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    setEditingId((cur) => (cur === id ? null : cur));
+  }
+
+  function closeAll() {
+    setOpenIds(new Set());
+    setEditingId(null);
+  }
+
+  function startEdit(a: Annotation) {
+    setEditingId(a.id);
+    setEditText(a.text);
+  }
+
+  async function handleSaveEdit(id: string) {
+    if (!onEdit || !editText.trim()) return;
+    setSavingEdit(true);
+    try {
+      await onEdit(id, editText.trim());
+      setEditingId(null);
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
   function handleImageClick(e: React.MouseEvent<HTMLImageElement>) {
-    setOpenId(null);
+    closeAll();
     if (readOnly || !onAdd) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setOpenId(null);
     setPendingPos({ x, y });
     setPendingText('');
   }
@@ -108,7 +153,7 @@ export function AnnotationLayer({
   }
 
   return (
-    <div ref={containerRef} onClick={() => setOpenId(null)} className="relative rounded-xl bg-black/[0.03]">
+    <div ref={containerRef} onClick={closeAll} className="relative rounded-xl bg-black/[0.03]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={imageUrl}
@@ -128,39 +173,72 @@ export function AnnotationLayer({
             onClick={(e) => {
               e.stopPropagation();
               setPendingPos(null);
-              setOpenId(openId === a.id ? null : a.id);
+              toggleOpen(a.id);
             }}
             className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-accent text-[11px] font-bold text-white shadow-lg shadow-black/30 transition-transform hover:scale-110 active:scale-100"
           >
             {annotations.indexOf(a) + 1}
           </button>
-          {openId === a.id && (
+          {openIds.has(a.id) && (
             <ClampedPopup
               boundsRef={containerRef}
-              className="absolute left-1/2 top-8 z-10 w-[min(14rem,calc(100vw-2rem))] rounded-xl border border-black/[0.08] bg-surface p-3 text-left shadow-2xl shadow-black/20"
+              className="absolute left-1/2 top-8 z-10 w-[min(14rem,calc(100vw-2rem))] rounded-xl border border-black/[0.08] bg-surface/90 p-3 text-left shadow-2xl shadow-black/20 backdrop-blur-sm"
             >
-              <div onClick={(e) => e.stopPropagation()} className="mb-2 flex items-start justify-between gap-2">
-                <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-[#2a231c]">{a.text}</p>
-                <div className="flex shrink-0 items-center gap-0.5">
-                  {!readOnly && onDelete && (
-                    <button
-                      onClick={() => {
-                        onDelete(a.id);
-                        setOpenId(null);
-                      }}
-                      className="flex h-5 w-5 items-center justify-center rounded-md text-red-500/70 transition hover:bg-red-500/10 hover:text-red-500 active:scale-[0.97]"
-                    >
-                      <Trash2 className="h-3 w-3" strokeWidth={2.25} />
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setOpenId(null)}
-                    aria-label="닫기"
-                    className="flex h-5 w-5 items-center justify-center rounded-md text-[#8a8074] transition hover:bg-black/[0.06] hover:text-[#2a231c] active:scale-[0.97]"
-                  >
-                    <X className="h-3 w-3" strokeWidth={2.25} />
-                  </button>
-                </div>
+              <div onClick={(e) => e.stopPropagation()}>
+                {editingId === a.id ? (
+                  <div className="space-y-2">
+                    <textarea
+                      autoFocus
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                      rows={3}
+                      className="w-full resize-none rounded-lg border border-black/[0.08] bg-black/[0.02] px-2.5 py-2 text-[12.5px] text-[#2a231c] outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
+                    />
+                    <div className="flex justify-end gap-1.5">
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-[#6b6258] transition hover:bg-black/[0.05] active:scale-[0.97]"
+                      >
+                        <X className="h-3.5 w-3.5" strokeWidth={2.25} />
+                      </button>
+                      <button
+                        onClick={() => handleSaveEdit(a.id)}
+                        disabled={savingEdit || !editText.trim()}
+                        className="flex items-center gap-1 rounded-lg bg-gradient-to-b from-accent to-accent-strong px-2.5 py-1 text-[12px] font-medium text-white transition hover:opacity-90 disabled:opacity-40 active:scale-[0.97]"
+                      >
+                        <Save className="h-3 w-3" strokeWidth={2.5} />
+                        저장
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-[#2a231c]">{a.text}</p>
+                    {!readOnly && (onEdit || onDelete) && (
+                      <div className="flex shrink-0 items-center gap-0.5">
+                        {onEdit && (
+                          <button
+                            onClick={() => startEdit(a)}
+                            className="flex h-5 w-5 items-center justify-center rounded-md text-[#8a8074] transition hover:bg-black/[0.06] hover:text-[#2a231c] active:scale-[0.97]"
+                          >
+                            <Pencil className="h-3 w-3" strokeWidth={2.25} />
+                          </button>
+                        )}
+                        {onDelete && (
+                          <button
+                            onClick={() => {
+                              onDelete(a.id);
+                              closeOne(a.id);
+                            }}
+                            className="flex h-5 w-5 items-center justify-center rounded-md text-red-500/70 transition hover:bg-red-500/10 hover:text-red-500 active:scale-[0.97]"
+                          >
+                            <Trash2 className="h-3 w-3" strokeWidth={2.25} />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </ClampedPopup>
           )}

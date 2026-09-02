@@ -114,14 +114,15 @@ export function ArtworkDetailModal({ artworkId, onClose, onEdit, onDeleted }: Ar
                   {artwork.annotations.length > 0 && (
                     <button
                       onClick={() => setShowHotspots((v) => !v)}
-                      className="absolute right-2.5 top-2.5 z-20 flex items-center gap-1.5 rounded-full border border-black/[0.08] bg-surface/90 px-2.5 py-1.5 text-[11.5px] font-medium text-[#4a4038] shadow-md backdrop-blur-sm transition hover:bg-surface active:scale-[0.97]"
+                      aria-label={showHotspots ? '핫스팟 번호 숨기기' : '핫스팟 번호 보이기'}
+                      title={showHotspots ? '핫스팟 번호 숨기기' : '핫스팟 번호 보이기'}
+                      className="absolute right-2.5 top-2.5 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-black/[0.08] bg-surface/90 text-[#4a4038] shadow-md backdrop-blur-sm transition hover:bg-surface active:scale-[0.97]"
                     >
                       {showHotspots ? (
                         <EyeOff className="h-3.5 w-3.5" strokeWidth={2.25} />
                       ) : (
                         <Eye className="h-3.5 w-3.5" strokeWidth={2.25} />
                       )}
-                      핫스팟 번호 {showHotspots ? '숨기기' : '보이기'}
                     </button>
                   )}
                 </div>
