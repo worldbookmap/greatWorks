@@ -282,9 +282,14 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
         const detail: MmcaArtworkDetail = await res.json();
 
         setTitle(detail.title || item.label);
+        setYear(detail.year != null ? String(detail.year) : '');
+        setYearDisplay(detail.year != null ? '' : detail.yearDisplay);
         setCollectionName(detail.collectionName);
         setLat(detail.lat);
         setLng(detail.lng);
+        if (detail.imageUrl) setImageUrl(detail.imageUrl);
+        if (detail.medium) setMedium(detail.medium);
+        if (detail.dimensions) setDimensions(detail.dimensions);
         if (detail.description) setDescription(detail.description);
         setWikidataId('');
         applyArtistName(detail.artistName);
