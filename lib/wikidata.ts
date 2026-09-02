@@ -66,6 +66,32 @@ export async function searchEntities(query: string, limit = 8): Promise<Wikidata
   }));
 }
 
+// 회화/조각/드로잉/판화/사진/프레스코/벽화 등 "시각예술 작품" 유형 (P31)
+// wbsearchentities는 라벨만 보고 매칭해 영화·소설 등 동명이인 항목이 섞이므로,
+// 구조화 검색(haswbstatement)으로 실제 작품 항목만 걸러낸다.
+const ARTWORK_TYPE_IDS = ['Q3305213', 'Q860861', 'Q93184', 'Q11060274', 'Q125191', 'Q22669139', 'Q219423'];
+
+export async function searchArtworks(query: string, limit = 8): Promise<WikidataSearchItem[]> {
+  const typeFilter = ARTWORK_TYPE_IDS.map((id) => `P31=${id}`).join('|');
+  const data = await wdFetch<{ query?: { search?: { title: string }[] } }>({
+    action: 'query',
+    list: 'search',
+    srnamespace: '0',
+    srsearch: `${query} haswbstatement:${typeFilter}`,
+    srlimit: String(limit),
+  });
+  const ids = (data.query?.search ?? []).map((item) => item.title);
+  // 세부 유형이 위 목록에 없는 작품(예: 태피스트리)은 필터에 걸리지 않으므로 일반 검색으로 폴백
+  if (ids.length === 0) return searchEntities(query, limit);
+
+  const entities = await getEntities(ids);
+  return ids.map((id) => ({
+    id,
+    label: labelOf(entities[id]) || id,
+    description: descriptionOf(entities[id]),
+  }));
+}
+
 async function getEntities(ids: string[]): Promise<Record<string, WikidataEntity>> {
   if (ids.length === 0) return {};
   const data = await wdFetch<{ entities?: Record<string, WikidataEntity> }>({
