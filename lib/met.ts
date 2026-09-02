@@ -44,10 +44,10 @@ export interface MetSearchItem {
 }
 
 // Met 검색 API는 objectID 목록만 반환하므로, 상위 결과만 상세 조회해 조합한다.
+// hasImages=true를 붙이면, 검색어가 아무것도 매칭하지 못했을 때도 빈 결과 대신
+// 이미지가 있는 소장품 중 아무거나(항상 같은 128건) 돌려주는 문제가 있어 빼둔다.
 export async function searchMetArtworks(query: string, limit = 5): Promise<MetSearchItem[]> {
-  const search = await metFetch<{ objectIDs: number[] | null }>(
-    `/search?hasImages=true&q=${encodeURIComponent(query)}`
-  );
+  const search = await metFetch<{ objectIDs: number[] | null }>(`/search?q=${encodeURIComponent(query)}`);
   const ids = (search.objectIDs ?? []).slice(0, limit);
   const objects = await Promise.all(
     ids.map((id) =>

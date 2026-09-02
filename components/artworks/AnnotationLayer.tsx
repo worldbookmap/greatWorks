@@ -10,6 +10,7 @@ interface AnnotationLayerProps {
   onAdd?: (xPct: number, yPct: number, text: string) => Promise<void>;
   onDelete?: (id: string) => void;
   readOnly?: boolean;
+  showMarkers?: boolean;
 }
 
 const VIEWPORT_MARGIN = 8;
@@ -69,7 +70,14 @@ function ClampedPopup({
   );
 }
 
-export function AnnotationLayer({ imageUrl, annotations, onAdd, onDelete, readOnly = false }: AnnotationLayerProps) {
+export function AnnotationLayer({
+  imageUrl,
+  annotations,
+  onAdd,
+  onDelete,
+  readOnly = false,
+  showMarkers = true,
+}: AnnotationLayerProps) {
   const [pendingPos, setPendingPos] = useState<{ x: number; y: number } | null>(null);
   const [pendingText, setPendingText] = useState('');
   const [saving, setSaving] = useState(false);
@@ -77,6 +85,7 @@ export function AnnotationLayer({ imageUrl, annotations, onAdd, onDelete, readOn
   const containerRef = useRef<HTMLDivElement>(null);
 
   function handleImageClick(e: React.MouseEvent<HTMLImageElement>) {
+    setOpenId(null);
     if (readOnly || !onAdd) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
@@ -99,7 +108,7 @@ export function AnnotationLayer({ imageUrl, annotations, onAdd, onDelete, readOn
   }
 
   return (
-    <div ref={containerRef} className="relative rounded-xl bg-black/[0.03]">
+    <div ref={containerRef} onClick={() => setOpenId(null)} className="relative rounded-xl bg-black/[0.03]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={imageUrl}
@@ -109,7 +118,7 @@ export function AnnotationLayer({ imageUrl, annotations, onAdd, onDelete, readOn
         draggable={false}
       />
 
-      {annotations.map((a) => (
+      {showMarkers && annotations.map((a) => (
         <div
           key={a.id}
           className="absolute -translate-x-1/2 -translate-y-1/2"
@@ -130,19 +139,28 @@ export function AnnotationLayer({ imageUrl, annotations, onAdd, onDelete, readOn
               boundsRef={containerRef}
               className="absolute left-1/2 top-8 z-10 w-[min(14rem,calc(100vw-2rem))] rounded-xl border border-black/[0.08] bg-surface p-3 text-left shadow-2xl shadow-black/20"
             >
-              <div className="mb-2 flex items-start justify-between gap-2">
+              <div onClick={(e) => e.stopPropagation()} className="mb-2 flex items-start justify-between gap-2">
                 <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-[#2a231c]">{a.text}</p>
-                {!readOnly && onDelete && (
+                <div className="flex shrink-0 items-center gap-0.5">
+                  {!readOnly && onDelete && (
+                    <button
+                      onClick={() => {
+                        onDelete(a.id);
+                        setOpenId(null);
+                      }}
+                      className="flex h-5 w-5 items-center justify-center rounded-md text-red-500/70 transition-colors hover:bg-red-500/10 hover:text-red-500"
+                    >
+                      <Trash2 className="h-3 w-3" strokeWidth={2.25} />
+                    </button>
+                  )}
                   <button
-                    onClick={() => {
-                      onDelete(a.id);
-                      setOpenId(null);
-                    }}
-                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-red-500/70 transition-colors hover:bg-red-500/10 hover:text-red-500"
+                    onClick={() => setOpenId(null)}
+                    aria-label="닫기"
+                    className="flex h-5 w-5 items-center justify-center rounded-md text-[#8a8074] transition-colors hover:bg-black/[0.06] hover:text-[#2a231c]"
                   >
-                    <Trash2 className="h-3 w-3" strokeWidth={2.25} />
+                    <X className="h-3 w-3" strokeWidth={2.25} />
                   </button>
-                )}
+                </div>
               </div>
             </ClampedPopup>
           )}

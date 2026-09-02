@@ -11,6 +11,12 @@ const LNG = -87.6237;
 
 const FIELDS = 'id,title,artist_display,date_display,medium_display,dimensions,image_id';
 
+// AIC의 Elasticsearch 검색은 실제로 일치하는 게 없어도 결과를 비우지 않고
+// 전체 소장품 중 아무거나(관련도 _score가 0에 가까운) 채워 돌려준다.
+// 진짜 일치(_score 수십~수천대)와 이 잡음(_score 1e-5대)의 격차가 워낙 커서,
+// 그 사이 어딘가로 최소 점수를 두면 무관한 결과를 걸러낼 수 있다.
+const MIN_RELEVANCE_SCORE = 1;
+
 interface AicRawArtwork {
   id: number;
   title: string;
@@ -19,6 +25,7 @@ interface AicRawArtwork {
   medium_display?: string;
   dimensions?: string;
   image_id?: string | null;
+  _score?: number;
 }
 
 async function aicFetch<T>(path: string, params: Record<string, string>): Promise<T> {
@@ -62,7 +69,9 @@ export async function searchAicArtworks(query: string, limit = 6): Promise<AicSe
     limit: String(limit),
     fields: FIELDS,
   });
-  return data.data.map((a) => ({ id: a.id, ...citationOf(a) }));
+  return data.data
+    .filter((a) => (a._score ?? 0) >= MIN_RELEVANCE_SCORE)
+    .map((a) => ({ id: a.id, ...citationOf(a) }));
 }
 
 export interface AicArtworkDetail {

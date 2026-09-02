@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ImageOff, Palette, Pencil, Trash2, X } from 'lucide-react';
+import { Eye, EyeOff, ImageOff, Palette, Pencil, Trash2, X } from 'lucide-react';
 import type { ArtworkDetail } from '@/lib/types';
 import { AnnotationLayer } from './AnnotationLayer';
 
@@ -26,6 +26,7 @@ function buildLine(parts: (string | undefined | null)[]) {
 export function ArtworkDetailModal({ artworkId, onClose, onEdit, onDeleted }: ArtworkDetailModalProps) {
   const [artwork, setArtwork] = useState<ArtworkDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showHotspots, setShowHotspots] = useState(true);
 
   useEffect(() => {
     setLoading(true);
@@ -103,7 +104,27 @@ export function ArtworkDetailModal({ artworkId, onClose, onEdit, onDeleted }: Ar
           ) : (
             <div className="space-y-4">
               {artwork.image_url ? (
-                <AnnotationLayer imageUrl={artwork.image_url} annotations={artwork.annotations} readOnly />
+                <div className="relative">
+                  <AnnotationLayer
+                    imageUrl={artwork.image_url}
+                    annotations={artwork.annotations}
+                    readOnly
+                    showMarkers={showHotspots}
+                  />
+                  {artwork.annotations.length > 0 && (
+                    <button
+                      onClick={() => setShowHotspots((v) => !v)}
+                      className="absolute right-2.5 top-2.5 z-20 flex items-center gap-1.5 rounded-full border border-black/[0.08] bg-surface/90 px-2.5 py-1.5 text-[11.5px] font-medium text-[#4a4038] shadow-md backdrop-blur-sm transition-colors hover:bg-surface"
+                    >
+                      {showHotspots ? (
+                        <EyeOff className="h-3.5 w-3.5" strokeWidth={2.25} />
+                      ) : (
+                        <Eye className="h-3.5 w-3.5" strokeWidth={2.25} />
+                      )}
+                      핫스팟 번호 {showHotspots ? '숨기기' : '보이기'}
+                    </button>
+                  )}
+                </div>
               ) : (
                 <div className="flex aspect-[4/3] items-center justify-center rounded-xl bg-black/[0.03]">
                   <ImageOff className="h-6 w-6 text-[#c9beae]" strokeWidth={1.5} />
