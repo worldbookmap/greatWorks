@@ -10,6 +10,9 @@
   --accent-strong: #ef3f3f;
   --teal: #0fb5a8;
   --gold: #ffb300;
+  /* 강한 ease-out — 진입/누름 피드백처럼 즉각적인 반응이 필요한 애니메이션용.
+     기본 CSS ease-out은 밋밋해서 의도된 느낌이 잘 안 산다. */
+  --ease-snappy: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 @theme inline {
@@ -22,8 +25,10 @@
   --color-accent-strong: var(--accent-strong);
   --color-teal: var(--teal);
   --color-gold: var(--gold);
+  --ease-snappy: var(--ease-snappy);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-noto-serif-kr);
 }
 
 * {
@@ -112,5 +117,35 @@ body {
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+}
+
+/* 모달 진입 애니메이션. 배경은 페이드, 패널은 중앙 기준으로 살짝 확대되며 나타난다
+   (모달은 특정 트리거에 앵커되지 않으므로 transform-origin은 항상 center). */
+.modal-backdrop {
+  transition: opacity 200ms ease-out;
+
+  @starting-style {
+    opacity: 0;
+  }
+}
+
+.modal-panel {
+  transform-origin: center;
+  transition: transform 220ms var(--ease-snappy), opacity 220ms ease-out;
+
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-panel {
+    transition: opacity 200ms ease-out;
+
+    @starting-style {
+      transform: none;
+    }
   }
 }

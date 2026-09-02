@@ -44,21 +44,21 @@ export function ArtistDetailModal({ artistId, onClose, onEdit, onDeleted, onOpen
 
   return (
     <div
-      className="fixed inset-0 z-[3500] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+      className="modal-backdrop fixed inset-0 z-[3500] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-black/[0.08] bg-surface shadow-2xl shadow-black/20"
+        className="modal-panel flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-black/[0.08] bg-surface shadow-2xl shadow-black/20"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex shrink-0 items-center justify-between gap-2 border-b border-black/[0.06] px-4 sm:px-6 py-4">
-          <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#2a231c]">
+          <h2 className="flex items-center gap-2 font-serif text-[16px] font-semibold tracking-normal text-[#2a231c]">
             <User className="h-4 w-4 text-accent-strong" strokeWidth={2.25} />
             화가 정보
           </h2>
           <button
             onClick={onClose}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#6b6258] transition-colors hover:bg-black/[0.05]"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#6b6258] transition hover:bg-black/[0.05] active:scale-[0.97]"
           >
             <X className="h-4 w-4" strokeWidth={2.25} />
           </button>
@@ -79,7 +79,7 @@ export function ArtistDetailModal({ artistId, onClose, onEdit, onDeleted, onOpen
                   </div>
                 )}
                 <div className="min-w-0">
-                  <p className="text-[17px] font-semibold text-[#2a231c]">{artist.name}</p>
+                  <p className="font-serif text-[19px] font-semibold tracking-normal text-[#2a231c]">{artist.name}</p>
                   {artist.name_en && artist.name_en !== artist.name && (
                     <p className="text-[13px] text-[#8a8074]">{artist.name_en}</p>
                   )}
@@ -158,14 +158,14 @@ export function ArtistDetailModal({ artistId, onClose, onEdit, onDeleted, onOpen
           <div className="flex shrink-0 gap-2 border-t border-black/[0.06] px-4 sm:px-6 py-4">
             <button
               onClick={onEdit}
-              className="flex items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent to-accent-strong px-4 py-2 text-sm font-medium text-white shadow-lg shadow-accent/25 transition-opacity hover:opacity-90"
+              className="flex items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent to-accent-strong px-4 py-2 text-sm font-medium text-white shadow-lg shadow-accent/25 transition hover:opacity-90 active:scale-[0.97]"
             >
               <Pencil className="h-3.5 w-3.5" strokeWidth={2.25} />
               수정
             </button>
             <button
               onClick={handleDelete}
-              className="flex items-center gap-1.5 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-500/10"
+              className="flex items-center gap-1.5 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-500/10 active:scale-[0.97]"
             >
               <Trash2 className="h-3.5 w-3.5" strokeWidth={2.25} />
               삭제

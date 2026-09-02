@@ -38,7 +38,7 @@ function ToastItem({ message, onDone }: { message: string; onDone: () => void })
 
   return (
     <div
-      className="flex items-center gap-2 rounded-full bg-[#2a231c] px-4 py-2.5 text-[13px] font-medium text-white shadow-2xl shadow-black/30 transition-all duration-200"
+      className="flex items-center gap-2 rounded-full bg-[#2a231c] px-4 py-2.5 text-[13px] font-medium text-white shadow-2xl shadow-black/30 transition duration-200"
       style={{ opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(8px)' }}
     >
       <CheckCircle2 className="h-4 w-4 text-teal" strokeWidth={2.25} />

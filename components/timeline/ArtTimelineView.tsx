@@ -81,7 +81,7 @@ export function ArtTimelineView() {
     <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
       <div className="mb-6 flex items-center gap-2">
         <CalendarRange className="h-5 w-5 text-accent-strong" strokeWidth={2.25} />
-        <h1 className="text-[17px] font-semibold text-[#2a231c]">작품 연대</h1>
+        <h1 className="font-serif text-[19px] font-semibold tracking-normal text-[#2a231c]">작품 연대</h1>
         <p className="text-[12.5px] text-[#8a8074]">같은 연대에 만들어진 작품을 모아 비교해보세요</p>
       </div>
 
@@ -95,7 +95,7 @@ export function ArtTimelineView() {
           {groups.map((group) => (
             <section key={group.key}>
               <h2 className="mb-3 flex items-baseline gap-2 border-b border-black/[0.06] pb-2">
-                <span className="text-[15px] font-semibold text-[#2a231c]">{group.label}</span>
+                <span className="font-serif text-[16px] font-semibold tracking-normal text-[#2a231c]">{group.label}</span>
                 <span className="text-[12px] text-[#8a8074]">{group.artworks.length}점</span>
               </h2>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
@@ -103,7 +103,7 @@ export function ArtTimelineView() {
                   <button
                     key={art.id}
                     onClick={() => setDetailArtworkId(art.id)}
-                    className="group flex flex-col overflow-hidden rounded-2xl border border-black/[0.07] bg-surface text-left shadow-sm shadow-black/[0.03] transition-shadow hover:shadow-lg hover:shadow-black/[0.08]"
+                    className="group flex flex-col overflow-hidden rounded-2xl border border-black/[0.07] bg-surface text-left shadow-sm shadow-black/[0.03] transition hover:shadow-lg hover:shadow-black/[0.08] active:scale-[0.97]"
                   >
                     <div className="flex aspect-square items-center justify-center overflow-hidden bg-black/[0.03]">
                       {art.image_url ? (
@@ -118,7 +118,7 @@ export function ArtTimelineView() {
                       )}
                     </div>
                     <div className="p-2.5">
-                      <p className="truncate text-[12.5px] font-semibold text-[#2a231c]">{art.title}</p>
+                      <p className="truncate font-serif text-[13px] font-semibold tracking-normal text-[#2a231c]">{art.title}</p>
                       <p className="mt-0.5 truncate text-[11px] text-[#8a8074]">{art.artist?.name ?? '작가 미상'}</p>
                       {yearLabel(art) && <p className="mt-0.5 truncate text-[11px] text-accent-strong">{yearLabel(art)}</p>}
                     </div>

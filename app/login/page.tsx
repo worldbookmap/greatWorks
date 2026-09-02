@@ -39,7 +39,7 @@ export default function LoginPage() {
             <Palette className="h-6 w-6 text-white" strokeWidth={2} />
           </span>
           <div className="text-center">
-            <h1 className="text-lg font-semibold tracking-tight text-[#2a231c]">명화 도감</h1>
+            <h1 className="font-serif text-xl font-semibold tracking-normal text-[#2a231c]">명화 도감</h1>
             <p className="mt-1 text-[13px] text-[#6b6258]">계속하려면 비밀번호를 입력하세요</p>
           </div>
         </div>
@@ -56,7 +56,7 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="비밀번호"
               autoFocus
-              className="w-full rounded-xl border border-black/[0.08] bg-black/[0.02] py-2.5 pl-10 pr-3.5 text-sm text-[#2a231c] placeholder:text-[#a39a8d] outline-none transition-colors focus:border-accent/60 focus:ring-2 focus:ring-accent/20"
+              className="w-full rounded-xl border border-black/[0.08] bg-black/[0.02] py-2.5 pl-10 pr-3.5 text-sm text-[#2a231c] placeholder:text-[#a39a8d] outline-none transition focus:border-accent/60 focus:ring-2 focus:ring-accent/20"
             />
           </div>
 
@@ -70,7 +70,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-gradient-to-b from-accent to-accent-strong py-2.5 text-sm font-medium text-white shadow-lg shadow-accent/25 transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="w-full rounded-xl bg-gradient-to-b from-accent to-accent-strong py-2.5 text-sm font-medium text-white shadow-lg shadow-accent/25 transition hover:opacity-90 disabled:opacity-50 active:scale-[0.97]"
           >
             {loading ? '확인 중...' : '입장하기'}
           </button>

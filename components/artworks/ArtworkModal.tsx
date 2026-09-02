@@ -33,7 +33,7 @@ import { normalizeForMatch } from '@/lib/search';
 import { AnnotationLayer } from './AnnotationLayer';
 
 const inputClass =
-  'w-full rounded-xl border border-black/[0.08] bg-black/[0.02] px-3.5 py-2.5 text-sm text-[#2a231c] placeholder:text-[#a39a8d] outline-none transition-colors focus:border-accent/50 focus:ring-2 focus:ring-accent/20';
+  'w-full rounded-xl border border-black/[0.08] bg-black/[0.02] px-3.5 py-2.5 text-sm text-[#2a231c] placeholder:text-[#a39a8d] outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20';
 const labelClass = 'mb-1.5 flex items-center gap-1.5 text-[13px] font-medium text-[#4a4038]';
 
 const SOURCE_LABEL: Record<'wikidata' | 'aic' | 'met' | 'mmca', string> = {
@@ -516,21 +516,21 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
 
   return (
     <div
-      className="fixed inset-0 z-[3500] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+      className="modal-backdrop fixed inset-0 z-[3500] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-black/[0.08] bg-surface shadow-2xl shadow-black/20"
+        className="modal-panel flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-black/[0.08] bg-surface shadow-2xl shadow-black/20"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex shrink-0 items-center justify-between gap-2 border-b border-black/[0.06] px-4 sm:px-6 py-4">
-          <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#2a231c]">
+          <h2 className="flex items-center gap-2 font-serif text-[16px] font-semibold tracking-normal text-[#2a231c]">
             <Palette className="h-4 w-4 text-accent-strong" strokeWidth={2.25} />
             {id ? '작품 정보 수정' : '새 작품 추가'}
           </h2>
           <button
             onClick={onClose}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#6b6258] transition-colors hover:bg-black/[0.05]"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#6b6258] transition hover:bg-black/[0.05] active:scale-[0.97]"
           >
             <X className="h-4 w-4" strokeWidth={2.25} />
           </button>
@@ -557,7 +557,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
                   type="button"
                   onClick={handleApplyQuickEntry}
                   disabled={!quickEntry.trim()}
-                  className="mt-2 flex items-center gap-1.5 rounded-lg border border-black/[0.08] bg-white px-3.5 py-1.5 text-[12.5px] font-medium text-[#4a4038] transition-colors hover:bg-black/[0.03] disabled:opacity-40"
+                  className="mt-2 flex items-center gap-1.5 rounded-lg border border-black/[0.08] bg-white px-3.5 py-1.5 text-[12.5px] font-medium text-[#4a4038] transition hover:bg-black/[0.03] disabled:opacity-40 active:scale-[0.97]"
                 >
                   <Wand2 className="h-3.5 w-3.5" strokeWidth={2.25} />
                   자동으로 나누어 넣기
@@ -581,7 +581,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
                     <button
                       onClick={handleSearchArtworks}
                       disabled={searching}
-                      className="shrink-0 rounded-xl border border-black/[0.08] bg-white px-4 py-2 text-sm font-medium text-[#4a4038] transition-colors hover:bg-black/[0.03] disabled:opacity-40"
+                      className="shrink-0 rounded-xl border border-black/[0.08] bg-white px-4 py-2 text-sm font-medium text-[#4a4038] transition hover:bg-black/[0.03] disabled:opacity-40 active:scale-[0.97]"
                     >
                       {searching ? <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.25} /> : '검색'}
                     </button>
@@ -595,7 +595,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
                             <button
                               onClick={() => handleApplySearchResult(item)}
                               disabled={applyingKey === key}
-                              className="flex w-full items-start gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-teal/10 disabled:opacity-50"
+                              className="flex w-full items-start gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition hover:bg-teal/10 disabled:opacity-50 active:scale-[0.97]"
                             >
                               {applyingKey === key ? (
                                 <Loader2 className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin text-teal" strokeWidth={2.25} />
@@ -642,7 +642,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
                           <button
                             onClick={() => handleApplyWikipediaResult(item)}
                             disabled={wpApplying === item.title}
-                            className="flex w-full items-start gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-gold/10 disabled:opacity-50"
+                            className="flex w-full items-start gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition hover:bg-gold/10 disabled:opacity-50 active:scale-[0.97]"
                           >
                             {wpApplying === item.title ? (
                               <Loader2 className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin text-gold" strokeWidth={2.25} />
@@ -691,7 +691,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
                     <button
                       onClick={handleCreateSuggestedArtist}
                       disabled={creatingArtist}
-                      className="mt-1.5 flex items-center gap-1 text-[12px] font-medium text-teal transition-opacity hover:opacity-80 disabled:opacity-50"
+                      className="mt-1.5 flex items-center gap-1 text-[12px] font-medium text-teal transition hover:opacity-80 disabled:opacity-50 active:scale-[0.97]"
                     >
                       {creatingArtist ? <Loader2 className="h-3 w-3 animate-spin" strokeWidth={2.5} /> : <Wand2 className="h-3 w-3" strokeWidth={2.5} />}
                       &apos;{suggestedArtistName}&apos; 작가로 새로 등록
@@ -737,7 +737,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploading}
-                    className="flex h-[42px] shrink-0 items-center gap-1.5 rounded-xl border border-black/[0.08] bg-white px-3.5 text-sm font-medium text-[#4a4038] transition-colors hover:bg-black/[0.03] disabled:opacity-40"
+                    className="flex h-[42px] shrink-0 items-center gap-1.5 rounded-xl border border-black/[0.08] bg-white px-3.5 text-sm font-medium text-[#4a4038] transition hover:bg-black/[0.03] disabled:opacity-40 active:scale-[0.97]"
                   >
                     {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.25} /> : <Upload className="h-3.5 w-3.5" strokeWidth={2.25} />}
                     업로드
@@ -795,7 +795,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
                 <button
                   type="button"
                   onClick={() => setShowPlaceSearch((v) => !v)}
-                  className="flex h-[42px] shrink-0 items-center gap-1.5 rounded-xl border border-black/[0.08] bg-white px-3.5 text-sm font-medium text-[#4a4038] transition-colors hover:bg-black/[0.03]"
+                  className="flex h-[42px] shrink-0 items-center gap-1.5 rounded-xl border border-black/[0.08] bg-white px-3.5 text-sm font-medium text-[#4a4038] transition hover:bg-black/[0.03] active:scale-[0.97]"
                 >
                   <Search className="h-3.5 w-3.5" strokeWidth={2.25} />
                   위치 검색
@@ -885,7 +885,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent to-accent-strong px-4 py-2 text-sm font-medium text-white shadow-lg shadow-accent/25 transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent to-accent-strong px-4 py-2 text-sm font-medium text-white shadow-lg shadow-accent/25 transition hover:opacity-90 disabled:opacity-50 active:scale-[0.97]"
               >
                 <Save className="h-3.5 w-3.5" strokeWidth={2.25} />
                 {saving ? '저장 중...' : id ? '저장' : '저장하고 설명 추가하기'}
@@ -893,7 +893,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
               {id && (
                 <button
                   onClick={handleDelete}
-                  className="flex items-center gap-1.5 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-500/10"
+                  className="flex items-center gap-1.5 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-500/10 active:scale-[0.97]"
                 >
                   <Trash2 className="h-3.5 w-3.5" strokeWidth={2.25} />
                   작품 삭제

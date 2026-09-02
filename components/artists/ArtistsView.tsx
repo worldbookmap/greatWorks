@@ -65,14 +65,14 @@ export function ArtistsView() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="화가 이름, 국적, 사조 검색"
-            className="w-full rounded-xl border border-black/[0.08] bg-surface py-2.5 pl-10 pr-3.5 text-sm text-[#2a231c] placeholder:text-[#a39a8d] outline-none transition-colors focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
+            className="w-full rounded-xl border border-black/[0.08] bg-surface py-2.5 pl-10 pr-3.5 text-sm text-[#2a231c] placeholder:text-[#a39a8d] outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
           />
         </div>
         <div className="flex shrink-0 items-center gap-0.5 rounded-xl border border-black/[0.08] bg-surface p-1">
           <button
             onClick={() => handleSetViewMode('grid')}
             aria-label="카드형 보기"
-            className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+            className={`flex h-8 w-8 items-center justify-center rounded-lg transition active:scale-[0.94] ${
               viewMode === 'grid' ? 'bg-black/[0.06] text-[#2a231c]' : 'text-[#a39a8d] hover:text-[#4a4038]'
             }`}
           >
@@ -81,7 +81,7 @@ export function ArtistsView() {
           <button
             onClick={() => handleSetViewMode('list')}
             aria-label="목록형 보기"
-            className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+            className={`flex h-8 w-8 items-center justify-center rounded-lg transition active:scale-[0.94] ${
               viewMode === 'list' ? 'bg-black/[0.06] text-[#2a231c]' : 'text-[#a39a8d] hover:text-[#4a4038]'
             }`}
           >
@@ -90,7 +90,7 @@ export function ArtistsView() {
         </div>
         <button
           onClick={() => setEditArtistState({})}
-          className="flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent to-accent-strong px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent/25 transition-opacity hover:opacity-90"
+          className="flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent to-accent-strong px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent/25 transition hover:opacity-90 active:scale-[0.97]"
         >
           <Plus className="h-4 w-4" strokeWidth={2.25} />
           화가 추가
@@ -108,7 +108,7 @@ export function ArtistsView() {
             <button
               key={a.id}
               onClick={() => setDetailArtistId(a.id)}
-              className="flex flex-col items-center gap-2.5 rounded-2xl border border-black/[0.07] bg-surface p-4 text-center shadow-sm shadow-black/[0.03] transition-shadow hover:shadow-lg hover:shadow-black/[0.08]"
+              className="flex flex-col items-center gap-2.5 rounded-2xl border border-black/[0.07] bg-surface p-4 text-center shadow-sm shadow-black/[0.03] transition hover:shadow-lg hover:shadow-black/[0.08] active:scale-[0.97]"
             >
               {a.image_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -119,7 +119,7 @@ export function ArtistsView() {
                 </div>
               )}
               <div className="min-w-0">
-                <p className="truncate text-[13.5px] font-semibold text-[#2a231c]">{a.name}</p>
+                <p className="truncate font-serif text-[14.5px] font-semibold tracking-normal text-[#2a231c]">{a.name}</p>
                 <p className="mt-0.5 truncate text-[11.5px] text-[#8a8074]">
                   {[a.nationality, lifespan(a)].filter(Boolean).join(' · ')}
                 </p>
@@ -138,7 +138,7 @@ export function ArtistsView() {
             <button
               key={a.id}
               onClick={() => setDetailArtistId(a.id)}
-              className="flex items-center gap-3 rounded-xl border border-black/[0.07] bg-surface p-2.5 text-left shadow-sm shadow-black/[0.03] transition-shadow hover:shadow-lg hover:shadow-black/[0.08]"
+              className="flex items-center gap-3 rounded-xl border border-black/[0.07] bg-surface p-2.5 text-left shadow-sm shadow-black/[0.03] transition hover:shadow-lg hover:shadow-black/[0.08] active:scale-[0.97]"
             >
               {a.image_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -149,7 +149,7 @@ export function ArtistsView() {
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[13.5px] font-semibold text-[#2a231c]">{a.name}</p>
+                <p className="truncate font-serif text-[14.5px] font-semibold tracking-normal text-[#2a231c]">{a.name}</p>
                 <p className="mt-0.5 truncate text-[11.5px] text-[#8a8074]">
                   {[a.nationality, lifespan(a)].filter(Boolean).join(' · ')}
                 </p>

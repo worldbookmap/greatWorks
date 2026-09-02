@@ -22,7 +22,7 @@ export function TopNav() {
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-accent to-accent-strong shadow-[0_0_20px_-4px_rgba(255,107,74,0.55)] sm:h-8 sm:w-8">
           <Palette className="h-4 w-4 text-white sm:h-4.5 sm:w-4.5" strokeWidth={2.25} />
         </span>
-        <span className="truncate text-[14px] font-semibold tracking-tight text-[#2a231c] sm:text-[15px]">
+        <span className="truncate font-serif text-[15px] font-semibold tracking-normal text-[#2a231c] sm:text-[16px]">
           명화 도감
         </span>
       </Link>
@@ -35,7 +35,7 @@ export function TopNav() {
             <Link
               key={tab.href}
               href={tab.href}
-              className={`flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[13px] font-medium transition-all duration-200 sm:px-3.5 ${
+              className={`flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[13px] font-medium transition duration-200 active:scale-[0.95] sm:px-3.5 ${
                 active
                   ? 'bg-white text-[#2a231c] shadow-[inset_0_0_0_1px_rgba(42,35,28,0.08)]'
                   : 'text-[#6b6258] hover:text-[#2a231c]'

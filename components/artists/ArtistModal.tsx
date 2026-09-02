@@ -24,7 +24,7 @@ import type { WikidataArtistDetail, WikidataSearchItem } from '@/lib/wikidata';
 import { useToast } from '@/components/ui/Toast';
 
 const inputClass =
-  'w-full rounded-xl border border-black/[0.08] bg-black/[0.02] px-3.5 py-2.5 text-sm text-[#2a231c] placeholder:text-[#a39a8d] outline-none transition-colors focus:border-accent/50 focus:ring-2 focus:ring-accent/20';
+  'w-full rounded-xl border border-black/[0.08] bg-black/[0.02] px-3.5 py-2.5 text-sm text-[#2a231c] placeholder:text-[#a39a8d] outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20';
 const labelClass = 'mb-1.5 flex items-center gap-1.5 text-[13px] font-medium text-[#4a4038]';
 
 interface ArtistModalProps {
@@ -283,21 +283,21 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
 
   return (
     <div
-      className="fixed inset-0 z-[3500] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+      className="modal-backdrop fixed inset-0 z-[3500] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-black/[0.08] bg-surface shadow-2xl shadow-black/20"
+        className="modal-panel flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-black/[0.08] bg-surface shadow-2xl shadow-black/20"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex shrink-0 items-center justify-between gap-2 border-b border-black/[0.06] px-4 sm:px-6 py-4">
-          <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[#2a231c]">
+          <h2 className="flex items-center gap-2 font-serif text-[16px] font-semibold tracking-normal text-[#2a231c]">
             <User className="h-4 w-4 text-accent-strong" strokeWidth={2.25} />
             {id ? '화가 정보 수정' : '새 화가 추가'}
           </h2>
           <button
             onClick={onClose}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#6b6258] transition-colors hover:bg-black/[0.05]"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#6b6258] transition hover:bg-black/[0.05] active:scale-[0.97]"
           >
             <X className="h-4 w-4" strokeWidth={2.25} />
           </button>
@@ -325,7 +325,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
                     <button
                       onClick={handleSearchWikidata}
                       disabled={wdSearching}
-                      className="shrink-0 rounded-xl border border-black/[0.08] bg-white px-4 py-2 text-sm font-medium text-[#4a4038] transition-colors hover:bg-black/[0.03] disabled:opacity-40"
+                      className="shrink-0 rounded-xl border border-black/[0.08] bg-white px-4 py-2 text-sm font-medium text-[#4a4038] transition hover:bg-black/[0.03] disabled:opacity-40 active:scale-[0.97]"
                     >
                       {wdSearching ? <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.25} /> : '검색'}
                     </button>
@@ -337,7 +337,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
                           <button
                             onClick={() => handleApplyWikidataResult(item)}
                             disabled={wdApplying === item.id}
-                            className="flex w-full items-start gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-teal/10 disabled:opacity-50"
+                            className="flex w-full items-start gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition hover:bg-teal/10 disabled:opacity-50 active:scale-[0.97]"
                           >
                             {wdApplying === item.id ? (
                               <Loader2 className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin text-teal" strokeWidth={2.25} />
@@ -430,7 +430,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
                       <button
                         type="button"
                         onClick={() => setRelTargetKind('artist')}
-                        className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-[12px] font-medium transition-colors ${
+                        className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-[12px] font-medium transition ${
                           relTargetKind === 'artist' ? 'bg-teal/10 text-teal' : 'text-[#8a8074] hover:text-[#4a4038]'
                         }`}
                       >
@@ -440,7 +440,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
                       <button
                         type="button"
                         onClick={() => setRelTargetKind('person')}
-                        className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-[12px] font-medium transition-colors ${
+                        className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-[12px] font-medium transition ${
                           relTargetKind === 'person' ? 'bg-teal/10 text-teal' : 'text-[#8a8074] hover:text-[#4a4038]'
                         }`}
                       >
@@ -500,7 +500,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
                       <button
                         onClick={handleAddRelationship}
                         disabled={(relTargetKind === 'artist' ? !relTargetId : !relPersonId) || addingRelationship}
-                        className="flex shrink-0 items-center gap-1 rounded-lg border border-black/[0.08] bg-white px-2.5 py-2 text-xs font-medium text-[#4a4038] transition-colors hover:bg-teal/10 disabled:opacity-40"
+                        className="flex shrink-0 items-center gap-1 rounded-lg border border-black/[0.08] bg-white px-2.5 py-2 text-xs font-medium text-[#4a4038] transition hover:bg-teal/10 disabled:opacity-40 active:scale-[0.97]"
                       >
                         <Plus className="h-3 w-3" strokeWidth={2.5} />
                         추가
@@ -525,7 +525,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
                           type="button"
                           onClick={handleCreatePerson}
                           disabled={!newPersonName.trim() || creatingPerson}
-                          className="flex shrink-0 items-center gap-1 rounded-lg border border-black/[0.08] bg-white px-2.5 py-2 text-xs font-medium text-[#4a4038] transition-colors hover:bg-gold/10 disabled:opacity-40"
+                          className="flex shrink-0 items-center gap-1 rounded-lg border border-black/[0.08] bg-white px-2.5 py-2 text-xs font-medium text-[#4a4038] transition hover:bg-gold/10 disabled:opacity-40 active:scale-[0.97]"
                         >
                           {creatingPerson ? <Loader2 className="h-3 w-3 animate-spin" strokeWidth={2.5} /> : <Plus className="h-3 w-3" strokeWidth={2.5} />}
                           인물 추가
@@ -565,7 +565,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
                               </span>
                               <button
                                 onClick={() => handleDeleteRelationship(rel.id)}
-                                className="flex shrink-0 h-6 w-6 items-center justify-center rounded-lg text-red-500/70 transition-colors hover:bg-red-500/10 hover:text-red-500"
+                                className="flex shrink-0 h-6 w-6 items-center justify-center rounded-lg text-red-500/70 transition hover:bg-red-500/10 hover:text-red-500 active:scale-[0.97]"
                               >
                                 <Trash2 className="h-3.5 w-3.5" strokeWidth={2.25} />
                               </button>
@@ -625,7 +625,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent to-accent-strong px-4 py-2 text-sm font-medium text-white shadow-lg shadow-accent/25 transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent to-accent-strong px-4 py-2 text-sm font-medium text-white shadow-lg shadow-accent/25 transition hover:opacity-90 disabled:opacity-50 active:scale-[0.97]"
               >
                 <Save className="h-3.5 w-3.5" strokeWidth={2.25} />
                 {saving ? '저장 중...' : id ? '저장' : '저장하고 관계 추가하기'}
@@ -633,7 +633,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
               {id && (
                 <button
                   onClick={handleDelete}
-                  className="flex items-center gap-1.5 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-500/10"
+                  className="flex items-center gap-1.5 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-500/10 active:scale-[0.97]"
                 >
                   <Trash2 className="h-3.5 w-3.5" strokeWidth={2.25} />
                   화가 삭제

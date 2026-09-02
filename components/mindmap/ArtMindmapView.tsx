@@ -40,7 +40,7 @@ function MindmapNodeCard({ data }: NodeProps) {
   const { icon: Icon, color, ring, bg } = NODE_STYLE[nodeData.type];
   return (
     <div
-      className="flex max-w-[220px] items-center gap-2 rounded-xl border bg-white px-2.5 py-2 shadow-md shadow-black/[0.06] transition-opacity duration-200"
+      className="flex max-w-[220px] items-center gap-2 rounded-xl border bg-white px-2.5 py-2 shadow-md shadow-black/[0.06] transition duration-200"
       style={{ borderColor: ring, opacity: nodeData.dimmed ? 0.2 : 1 }}
     >
       <Handle type="target" position={Position.Left} style={{ background: color, border: 'none', width: 6, height: 6 }} />
@@ -256,7 +256,7 @@ export function ArtMindmapView() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="작가, 작품 검색"
-            className="w-full rounded-xl border border-black/[0.08] bg-surface/95 py-2 pl-9 pr-3 text-[13px] text-[#2a231c] shadow-lg shadow-black/[0.06] outline-none backdrop-blur-md transition-colors placeholder:text-[#a39a8d] focus:border-accent/50 focus:ring-2 focus:ring-accent/20 sm:w-64"
+            className="w-full rounded-xl border border-black/[0.08] bg-surface/95 py-2 pl-9 pr-3 text-[13px] text-[#2a231c] shadow-lg shadow-black/[0.06] outline-none backdrop-blur-md transition placeholder:text-[#a39a8d] focus:border-accent/50 focus:ring-2 focus:ring-accent/20 sm:w-64"
           />
         </div>
         <div className="mt-2 flex flex-wrap gap-1.5">
@@ -380,11 +380,11 @@ export function ArtMindmapView() {
 
       {pendingConnection && (
         <div
-          className="fixed inset-0 z-[3500] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+          className="modal-backdrop fixed inset-0 z-[3500] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
           onClick={() => setPendingConnection(null)}
         >
           <div
-            className="w-full max-w-sm rounded-2xl border border-black/[0.08] bg-surface p-5 shadow-2xl shadow-black/20"
+            className="modal-panel w-full max-w-sm rounded-2xl border border-black/[0.08] bg-surface p-5 shadow-2xl shadow-black/20"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between gap-2">
@@ -394,7 +394,7 @@ export function ArtMindmapView() {
               </h3>
               <button
                 onClick={() => setPendingConnection(null)}
-                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[#6b6258] transition-colors hover:bg-black/[0.05]"
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[#6b6258] transition hover:bg-black/[0.05] active:scale-[0.97]"
               >
                 <X className="h-3.5 w-3.5" strokeWidth={2.25} />
               </button>
@@ -410,7 +410,7 @@ export function ArtMindmapView() {
             <select
               value={connType}
               onChange={(e) => setConnType(e.target.value as RelationshipType)}
-              className="mb-3 w-full appearance-none rounded-xl border border-black/[0.08] bg-black/[0.02] px-3.5 py-2.5 text-sm text-[#2a231c] outline-none transition-colors focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
+              className="mb-3 w-full appearance-none rounded-xl border border-black/[0.08] bg-black/[0.02] px-3.5 py-2.5 text-sm text-[#2a231c] outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
             >
               {RELATIONSHIP_TYPES.map((t) => (
                 <option key={t} value={t}>
@@ -424,7 +424,7 @@ export function ArtMindmapView() {
                 value={connTypeCustom}
                 onChange={(e) => setConnTypeCustom(e.target.value)}
                 placeholder="관계 직접 입력 (예: 동업자)"
-                className="mb-3 w-full rounded-xl border border-black/[0.08] bg-black/[0.02] px-3.5 py-2.5 text-sm text-[#2a231c] placeholder:text-[#a39a8d] outline-none transition-colors focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
+                className="mb-3 w-full rounded-xl border border-black/[0.08] bg-black/[0.02] px-3.5 py-2.5 text-sm text-[#2a231c] placeholder:text-[#a39a8d] outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
               />
             )}
 
@@ -432,7 +432,7 @@ export function ArtMindmapView() {
             <input
               value={connDescription}
               onChange={(e) => setConnDescription(e.target.value)}
-              className="mb-3 w-full rounded-xl border border-black/[0.08] bg-black/[0.02] px-3.5 py-2.5 text-sm text-[#2a231c] placeholder:text-[#a39a8d] outline-none transition-colors focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
+              className="mb-3 w-full rounded-xl border border-black/[0.08] bg-black/[0.02] px-3.5 py-2.5 text-sm text-[#2a231c] placeholder:text-[#a39a8d] outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
             />
 
             {connError && (
@@ -445,14 +445,14 @@ export function ArtMindmapView() {
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setPendingConnection(null)}
-                className="rounded-xl border border-black/[0.08] bg-white px-3.5 py-2 text-sm font-medium text-[#4a4038] transition-colors hover:bg-black/[0.03]"
+                className="rounded-xl border border-black/[0.08] bg-white px-3.5 py-2 text-sm font-medium text-[#4a4038] transition hover:bg-black/[0.03] active:scale-[0.97]"
               >
                 취소
               </button>
               <button
                 onClick={handleConfirmConnection}
                 disabled={connecting}
-                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent to-accent-strong px-4 py-2 text-sm font-medium text-white shadow-lg shadow-accent/25 transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent to-accent-strong px-4 py-2 text-sm font-medium text-white shadow-lg shadow-accent/25 transition hover:opacity-90 disabled:opacity-50 active:scale-[0.97]"
               >
                 {connecting ? <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.25} /> : <Link2 className="h-3.5 w-3.5" strokeWidth={2.25} />}
                 연결

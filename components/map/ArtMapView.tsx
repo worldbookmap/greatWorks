@@ -71,7 +71,7 @@ export function ArtMapView() {
                     <li key={art.id}>
                       <button
                         onClick={() => setDetailArtworkId(art.id)}
-                        className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent/10"
+                        className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition hover:bg-accent/10 active:scale-[0.97]"
                       >
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-black/[0.05]">
                           {art.image_url ? (

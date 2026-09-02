@@ -17,7 +17,7 @@ export function Pagination({ page, totalPages, onChange }: PaginationProps) {
         onClick={() => onChange(page - 1)}
         disabled={page <= 1}
         aria-label="이전 페이지"
-        className="flex h-8 w-8 items-center justify-center rounded-lg border border-black/[0.08] bg-surface text-[#4a4038] transition-colors hover:bg-black/[0.03] disabled:pointer-events-none disabled:opacity-40"
+        className="flex h-8 w-8 items-center justify-center rounded-lg border border-black/[0.08] bg-surface text-[#4a4038] transition hover:bg-black/[0.03] disabled:pointer-events-none disabled:opacity-40 active:scale-[0.97]"
       >
         <ChevronLeft className="h-4 w-4" strokeWidth={2.25} />
       </button>
@@ -28,7 +28,7 @@ export function Pagination({ page, totalPages, onChange }: PaginationProps) {
         onClick={() => onChange(page + 1)}
         disabled={page >= totalPages}
         aria-label="다음 페이지"
-        className="flex h-8 w-8 items-center justify-center rounded-lg border border-black/[0.08] bg-surface text-[#4a4038] transition-colors hover:bg-black/[0.03] disabled:pointer-events-none disabled:opacity-40"
+        className="flex h-8 w-8 items-center justify-center rounded-lg border border-black/[0.08] bg-surface text-[#4a4038] transition hover:bg-black/[0.03] disabled:pointer-events-none disabled:opacity-40 active:scale-[0.97]"
       >
         <ChevronRight className="h-4 w-4" strokeWidth={2.25} />
       </button>

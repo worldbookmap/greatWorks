@@ -130,7 +130,7 @@ export function AnnotationLayer({
               setPendingPos(null);
               setOpenId(openId === a.id ? null : a.id);
             }}
-            className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-accent text-[11px] font-bold text-white shadow-lg shadow-black/30 transition-transform hover:scale-110"
+            className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-accent text-[11px] font-bold text-white shadow-lg shadow-black/30 transition-transform hover:scale-110 active:scale-100"
           >
             {annotations.indexOf(a) + 1}
           </button>
@@ -148,7 +148,7 @@ export function AnnotationLayer({
                         onDelete(a.id);
                         setOpenId(null);
                       }}
-                      className="flex h-5 w-5 items-center justify-center rounded-md text-red-500/70 transition-colors hover:bg-red-500/10 hover:text-red-500"
+                      className="flex h-5 w-5 items-center justify-center rounded-md text-red-500/70 transition hover:bg-red-500/10 hover:text-red-500 active:scale-[0.97]"
                     >
                       <Trash2 className="h-3 w-3" strokeWidth={2.25} />
                     </button>
@@ -156,7 +156,7 @@ export function AnnotationLayer({
                   <button
                     onClick={() => setOpenId(null)}
                     aria-label="닫기"
-                    className="flex h-5 w-5 items-center justify-center rounded-md text-[#8a8074] transition-colors hover:bg-black/[0.06] hover:text-[#2a231c]"
+                    className="flex h-5 w-5 items-center justify-center rounded-md text-[#8a8074] transition hover:bg-black/[0.06] hover:text-[#2a231c] active:scale-[0.97]"
                   >
                     <X className="h-3 w-3" strokeWidth={2.25} />
                   </button>
@@ -190,14 +190,14 @@ export function AnnotationLayer({
               <div className="flex justify-end gap-1.5">
                 <button
                   onClick={() => setPendingPos(null)}
-                  className="flex h-7 w-7 items-center justify-center rounded-lg text-[#6b6258] transition-colors hover:bg-black/[0.05]"
+                  className="flex h-7 w-7 items-center justify-center rounded-lg text-[#6b6258] transition hover:bg-black/[0.05] active:scale-[0.97]"
                 >
                   <X className="h-3.5 w-3.5" strokeWidth={2.25} />
                 </button>
                 <button
                   onClick={handleSavePending}
                   disabled={saving || !pendingText.trim()}
-                  className="flex items-center gap-1 rounded-lg bg-gradient-to-b from-accent to-accent-strong px-2.5 py-1 text-[12px] font-medium text-white disabled:opacity-40"
+                  className="flex items-center gap-1 rounded-lg bg-gradient-to-b from-accent to-accent-strong px-2.5 py-1 text-[12px] font-medium text-white transition hover:opacity-90 disabled:opacity-40 active:scale-[0.97]"
                 >
                   <Save className="h-3 w-3" strokeWidth={2.5} />
                   저장
