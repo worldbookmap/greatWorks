@@ -21,7 +21,19 @@ interface ArtworkPoint {
   key: string;
   lat: number;
   lng: number;
+  locationLabel: string;
+  locationSubLabel: string;
   artworks: Artwork[];
+}
+
+// 같은 위치로 묶인 작품들의 소장처 표기가 다를 수 있어(번역 누락 등),
+// 그중 가장 먼저 채워진 값을 대표로 사용한다.
+function firstNonEmpty(artworks: Artwork[], pick: (a: Artwork) => string) {
+  for (const art of artworks) {
+    const value = pick(art).trim();
+    if (value) return value;
+  }
+  return '';
 }
 
 export function ArtMapView() {
@@ -42,14 +54,26 @@ export function ArtMapView() {
 
   // 같은 위치(소장처)의 작품을 하나의 포인트로 묶습니다.
   const points: ArtworkPoint[] = useMemo(() => {
-    const map = new Map<string, ArtworkPoint>();
+    const map = new Map<string, { lat: number; lng: number; artworks: Artwork[] }>();
     for (const art of located) {
       const key = `${(art.lat as number).toFixed(3)},${(art.lng as number).toFixed(3)}`;
       const existing = map.get(key);
       if (existing) existing.artworks.push(art);
-      else map.set(key, { key, lat: art.lat as number, lng: art.lng as number, artworks: [art] });
+      else map.set(key, { lat: art.lat as number, lng: art.lng as number, artworks: [art] });
     }
-    return Array.from(map.values());
+    return Array.from(map.entries()).map(([key, { lat, lng, artworks }]) => {
+      const collectionName = firstNonEmpty(artworks, (a) => a.collection_name);
+      const city = firstNonEmpty(artworks, (a) => a.collection_city);
+      const country = firstNonEmpty(artworks, (a) => a.collection_country);
+      return {
+        key,
+        lat,
+        lng,
+        locationLabel: collectionName || '소장처 미상',
+        locationSubLabel: [city, country].filter(Boolean).join(', '),
+        artworks,
+      };
+    });
   }, [located]);
 
   return (
@@ -63,9 +87,13 @@ export function ArtMapView() {
           <Marker key={point.key} position={[point.lat, point.lng]}>
             <Popup>
               <div className="w-56">
-                <p className="mb-1.5 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-[#8a8074]">
-                  <MapPin className="h-3 w-3" strokeWidth={2.25} />
-                  이 위치의 작품 ({point.artworks.length})
+                <p className="mb-0.5 flex items-center gap-1 text-[13px] font-semibold text-[#2a231c]">
+                  <MapPin className="h-3.5 w-3.5 shrink-0 text-accent-strong" strokeWidth={2.25} />
+                  <span className="truncate">{point.locationLabel}</span>
+                </p>
+                <p className="mb-1.5 truncate text-[11px] text-[#8a8074]">
+                  {point.locationSubLabel && `${point.locationSubLabel} · `}
+                  작품 {point.artworks.length}점
                 </p>
                 <ul className="max-h-56 space-y-0.5 overflow-y-auto">
                   {point.artworks.map((art) => (
