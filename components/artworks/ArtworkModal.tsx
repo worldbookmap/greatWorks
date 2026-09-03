@@ -139,6 +139,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
   const [title, setTitle] = useState('');
   const [titleEn, setTitleEn] = useState('');
   const [artistId, setArtistId] = useState('');
+  const [artistInput, setArtistInput] = useState('');
   const [year, setYear] = useState('');
   const [yearDisplay, setYearDisplay] = useState('');
   const [collectionName, setCollectionName] = useState('');
@@ -199,6 +200,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
         setTitle(data.title);
         setTitleEn(data.title_en ?? '');
         setArtistId(data.artist_id ?? '');
+        setArtistInput(data.artist?.name ?? '');
         setYear(data.year != null ? String(data.year) : '');
         setYearDisplay(data.year_display ?? '');
         setCollectionName(data.collection_name ?? '');
@@ -224,9 +226,14 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
     if (res.ok) setAnnotations(await res.json());
   }
 
-  // 검색 결과의 작가명을 기존 등록된 작가와 매칭하거나, 새로 등록하도록 제안한다.
+  // 검색 결과나 직접 입력한 작가명을 기존 등록된 작가와 매칭하거나, 새로 등록하도록 제안한다.
   function applyArtistName(name: string) {
-    if (!name) return;
+    setArtistInput(name);
+    if (!name) {
+      setArtistId('');
+      setSuggestedArtistName(null);
+      return;
+    }
     const match = artists.find((a) => normalizeForMatch(a.name) === normalizeForMatch(name));
     if (match) {
       setArtistId(match.id);
@@ -234,6 +241,26 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
     } else {
       setArtistId('');
       setSuggestedArtistName(name);
+    }
+  }
+
+  // 작가 입력란에 직접 타이핑할 때: 기존 작가와 이름이 일치하면 자동 선택하고,
+  // 아니면 "새로 등록" 제안을 띄운다.
+  function handleArtistInputChange(value: string) {
+    setArtistInput(value);
+    const trimmed = value.trim();
+    if (!trimmed) {
+      setArtistId('');
+      setSuggestedArtistName(null);
+      return;
+    }
+    const match = artists.find((a) => normalizeForMatch(a.name) === normalizeForMatch(trimmed));
+    if (match) {
+      setArtistId(match.id);
+      setSuggestedArtistName(null);
+    } else {
+      setArtistId('');
+      setSuggestedArtistName(trimmed);
     }
   }
 
@@ -410,6 +437,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
       const created: Artist = await createRes.json();
       setArtists((prev) => [created, ...prev]);
       setArtistId(created.id);
+      setArtistInput(created.name);
       setSuggestedArtistName(null);
     } catch (e) {
       setError((e as Error).message);
@@ -706,14 +734,18 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
               <div className="flex gap-3">
                 <div className="flex-1">
                   <label className={labelClass}>작가</label>
-                  <select value={artistId} onChange={(e) => setArtistId(e.target.value)} className={`${inputClass} appearance-none`}>
-                    <option value="">선택 안 함</option>
+                  <input
+                    value={artistInput}
+                    onChange={(e) => handleArtistInputChange(e.target.value)}
+                    list="artist-options"
+                    className={inputClass}
+                    placeholder="검색 또는 직접 입력 (예: 빈센트 반 고흐)"
+                  />
+                  <datalist id="artist-options">
                     {artists.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.name}
-                      </option>
+                      <option key={a.id} value={a.name} />
                     ))}
-                  </select>
+                  </datalist>
                   {suggestedArtistName && (
                     <button
                       onClick={handleCreateSuggestedArtist}
