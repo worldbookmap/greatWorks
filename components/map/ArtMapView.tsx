@@ -7,6 +7,7 @@ import { ImageOff, MapPin } from 'lucide-react';
 import type { Artwork } from '@/lib/types';
 import { ArtworkModal } from '@/components/artworks/ArtworkModal';
 import { ArtworkDetailModal } from '@/components/artworks/ArtworkDetailModal';
+import { RemoteThumbnail } from '@/components/ui/RemoteThumbnail';
 
 // Default Leaflet marker icons reference asset paths that break under bundlers;
 // point them at the CDN copies instead of shipping/aliasing the PNGs ourselves.
@@ -73,10 +74,9 @@ export function ArtMapView() {
                         onClick={() => setDetailArtworkId(art.id)}
                         className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition hover:bg-accent/10 active:scale-[0.97]"
                       >
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-black/[0.05]">
+                        <div className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-black/[0.05]">
                           {art.image_url ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={art.image_url} alt="" className="h-full w-full object-cover" />
+                            <RemoteThumbnail src={art.image_url} alt="" sizes="32px" className="object-cover" />
                           ) : (
                             <ImageOff className="h-3.5 w-3.5 text-[#c9beae]" strokeWidth={1.5} />
                           )}

@@ -747,7 +747,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
                 <div className="flex items-center gap-2">
                   {imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={imageUrl} alt="" className="h-[42px] w-[42px] shrink-0 rounded-lg object-cover ring-1 ring-black/[0.08]" />
+                    <img src={imageUrl} alt="" loading="lazy" className="h-[42px] w-[42px] shrink-0 rounded-lg object-cover ring-1 ring-black/[0.08]" />
                   ) : (
                     <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-lg bg-black/[0.03] ring-1 ring-black/[0.08]">
                       <BookImage className="h-4 w-4 text-[#c9beae]" strokeWidth={1.5} />

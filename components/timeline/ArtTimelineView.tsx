@@ -5,6 +5,7 @@ import { CalendarRange, ImageOff } from 'lucide-react';
 import type { Artwork } from '@/lib/types';
 import { ArtworkDetailModal } from '@/components/artworks/ArtworkDetailModal';
 import { ArtworkModal } from '@/components/artworks/ArtworkModal';
+import { RemoteThumbnail } from '@/components/ui/RemoteThumbnail';
 
 interface EraGroup {
   key: string;
@@ -105,13 +106,13 @@ export function ArtTimelineView() {
                     onClick={() => setDetailArtworkId(art.id)}
                     className="group flex flex-col overflow-hidden rounded-2xl border border-black/[0.07] bg-surface text-left shadow-sm shadow-black/[0.03] transition hover:shadow-lg hover:shadow-black/[0.08] active:scale-[0.97]"
                   >
-                    <div className="flex aspect-square items-center justify-center overflow-hidden bg-black/[0.03]">
+                    <div className="relative flex aspect-square items-center justify-center overflow-hidden bg-black/[0.03]">
                       {art.image_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        <RemoteThumbnail
                           src={art.image_url}
                           alt=""
-                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+                          sizes="(min-width: 1024px) 18vw, (min-width: 640px) 30vw, 45vw"
+                          className="object-cover transition-transform duration-300 group-hover:scale-[1.04]"
                         />
                       ) : (
                         <ImageOff className="h-6 w-6 text-[#c9beae]" strokeWidth={1.5} />

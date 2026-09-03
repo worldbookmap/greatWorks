@@ -28,6 +28,7 @@ import { ArtworkDetailModal } from '@/components/artworks/ArtworkDetailModal';
 import { ArtistModal } from '@/components/artists/ArtistModal';
 import { ArtistDetailModal } from '@/components/artists/ArtistDetailModal';
 import { PersonDetailModal } from '@/components/artists/PersonDetailModal';
+import { RemoteThumbnail } from '@/components/ui/RemoteThumbnail';
 
 const NODE_STYLE: Record<MindmapNode['type'], { icon: typeof User; color: string; ring: string; bg: string }> = {
   artist: { icon: User, color: '#0fb5a8', ring: 'rgba(15,181,168,0.4)', bg: 'rgba(15,181,168,0.08)' },
@@ -45,8 +46,9 @@ function MindmapNodeCard({ data }: NodeProps) {
     >
       <Handle type="target" position={Position.Left} style={{ background: color, border: 'none', width: 6, height: 6 }} />
       {nodeData.imageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={nodeData.imageUrl} alt="" className="h-6 w-6 shrink-0 rounded-md object-cover" style={{ boxShadow: `0 0 0 1.5px ${ring}` }} />
+        <div className="relative h-6 w-6 shrink-0 overflow-hidden rounded-md" style={{ boxShadow: `0 0 0 1.5px ${ring}` }}>
+          <RemoteThumbnail src={nodeData.imageUrl} alt="" sizes="24px" className="object-cover" />
+        </div>
       ) : (
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md" style={{ background: bg }}>
           <Icon className="h-3.5 w-3.5" style={{ color }} strokeWidth={2.25} />

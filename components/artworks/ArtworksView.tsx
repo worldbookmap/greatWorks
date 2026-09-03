@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ImageOff, LayoutGrid, List, Palette, Plus, Search } from 'lucide-react';
 import type { Artwork } from '@/lib/types';
 import { Pagination } from '@/components/ui/Pagination';
+import { RemoteThumbnail } from '@/components/ui/RemoteThumbnail';
 import { ArtworkModal } from './ArtworkModal';
 import { ArtworkDetailModal } from './ArtworkDetailModal';
 
@@ -101,13 +102,13 @@ export function ArtworksView() {
               onClick={() => setDetailArtworkId(art.id)}
               className="group flex flex-col overflow-hidden rounded-2xl border border-black/[0.07] bg-surface text-left shadow-sm shadow-black/[0.03] transition hover:shadow-lg hover:shadow-black/[0.08] active:scale-[0.97]"
             >
-              <div className="flex aspect-[4/5] items-center justify-center overflow-hidden bg-black/[0.03]">
+              <div className="relative flex aspect-[4/5] items-center justify-center overflow-hidden bg-black/[0.03]">
                 {art.image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <RemoteThumbnail
                     src={art.image_url}
                     alt=""
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+                    sizes="(min-width: 1024px) 22vw, (min-width: 640px) 30vw, 45vw"
+                    className="object-cover transition-transform duration-300 group-hover:scale-[1.04]"
                   />
                 ) : (
                   <ImageOff className="h-6 w-6 text-[#c9beae]" strokeWidth={1.5} />
@@ -131,10 +132,9 @@ export function ArtworksView() {
               onClick={() => setDetailArtworkId(art.id)}
               className="flex items-center gap-3 rounded-xl border border-black/[0.07] bg-surface p-2.5 text-left shadow-sm shadow-black/[0.03] transition hover:shadow-lg hover:shadow-black/[0.08] active:scale-[0.97]"
             >
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-black/[0.03]">
+              <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-black/[0.03]">
                 {art.image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={art.image_url} alt="" className="h-full w-full object-cover" />
+                  <RemoteThumbnail src={art.image_url} alt="" sizes="56px" className="object-cover" />
                 ) : (
                   <ImageOff className="h-4 w-4 text-[#c9beae]" strokeWidth={1.5} />
                 )}

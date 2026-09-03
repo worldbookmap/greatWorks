@@ -59,7 +59,7 @@ export function PersonDetailModal({ personId, onClose, onDeleted, onOpenArtist }
               <div className="flex gap-4">
                 {person.image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={person.image_url} alt="" className="h-24 w-24 shrink-0 rounded-2xl object-cover ring-1 ring-black/[0.08]" />
+                  <img src={person.image_url} alt="" loading="lazy" className="h-24 w-24 shrink-0 rounded-2xl object-cover ring-1 ring-black/[0.08]" />
                 ) : (
                   <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-black/[0.03] ring-1 ring-black/[0.08]">
                     <UserRound className="h-6 w-6 text-[#c9beae]" strokeWidth={1.5} />

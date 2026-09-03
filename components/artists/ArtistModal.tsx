@@ -361,7 +361,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
               <div className="flex gap-3">
                 {imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={imageUrl} alt="" className="h-20 w-20 shrink-0 rounded-xl object-cover ring-1 ring-black/[0.08]" />
+                  <img src={imageUrl} alt="" loading="lazy" className="h-20 w-20 shrink-0 rounded-xl object-cover ring-1 ring-black/[0.08]" />
                 ) : (
                   <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-black/[0.03] ring-1 ring-black/[0.08]">
                     <ImageOff className="h-5 w-5 text-[#c9beae]" strokeWidth={1.5} />
@@ -597,7 +597,7 @@ export function ArtistModal({ artistId, onClose, onSaved, onDeleted, onOpenArtwo
                           <div className="flex aspect-square items-center justify-center overflow-hidden bg-black/[0.03]">
                             {art.image_url ? (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img src={art.image_url} alt="" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+                              <img src={art.image_url} alt="" loading="lazy" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
                             ) : (
                               <ImageOff className="h-4 w-4 text-[#c9beae]" strokeWidth={1.5} />
                             )}

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ImageOff, LayoutGrid, List, Plus, Search, User } from 'lucide-react';
 import type { Artist } from '@/lib/types';
 import { Pagination } from '@/components/ui/Pagination';
+import { RemoteThumbnail } from '@/components/ui/RemoteThumbnail';
 import { ArtworkModal } from '@/components/artworks/ArtworkModal';
 import { ArtworkDetailModal } from '@/components/artworks/ArtworkDetailModal';
 import { ArtistModal } from './ArtistModal';
@@ -111,8 +112,9 @@ export function ArtistsView() {
               className="flex flex-col items-center gap-2.5 rounded-2xl border border-black/[0.07] bg-surface p-4 text-center shadow-sm shadow-black/[0.03] transition hover:shadow-lg hover:shadow-black/[0.08] active:scale-[0.97]"
             >
               {a.image_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={a.image_url} alt="" className="h-20 w-20 rounded-full object-cover ring-1 ring-black/[0.08]" />
+                <div className="relative h-20 w-20 overflow-hidden rounded-full ring-1 ring-black/[0.08]">
+                  <RemoteThumbnail src={a.image_url} alt="" sizes="80px" className="object-cover" />
+                </div>
               ) : (
                 <div className="flex h-20 w-20 items-center justify-center rounded-full bg-black/[0.03] ring-1 ring-black/[0.08]">
                   <ImageOff className="h-5 w-5 text-[#c9beae]" strokeWidth={1.5} />
@@ -141,8 +143,9 @@ export function ArtistsView() {
               className="flex items-center gap-3 rounded-xl border border-black/[0.07] bg-surface p-2.5 text-left shadow-sm shadow-black/[0.03] transition hover:shadow-lg hover:shadow-black/[0.08] active:scale-[0.97]"
             >
               {a.image_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={a.image_url} alt="" className="h-12 w-12 shrink-0 rounded-full object-cover ring-1 ring-black/[0.08]" />
+                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full ring-1 ring-black/[0.08]">
+                  <RemoteThumbnail src={a.image_url} alt="" sizes="48px" className="object-cover" />
+                </div>
               ) : (
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-black/[0.03] ring-1 ring-black/[0.08]">
                   <ImageOff className="h-4 w-4 text-[#c9beae]" strokeWidth={1.5} />
