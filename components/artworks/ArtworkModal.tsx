@@ -29,6 +29,7 @@ import type { MetArtworkDetail } from '@/lib/met';
 import type { MmcaArtworkDetail } from '@/lib/mmca';
 import type { PompidouArtworkDetail } from '@/lib/pompidou';
 import type { NationalGalleryArtworkDetail } from '@/lib/nationalgallery';
+import type { TateArtworkDetail } from '@/lib/tate';
 import type { PlaceSearchResult } from '@/lib/geocode';
 import { useToast } from '@/components/ui/Toast';
 import { normalizeForMatch } from '@/lib/search';
@@ -38,21 +39,23 @@ const inputClass =
   'w-full rounded-xl border border-black/[0.08] bg-black/[0.02] px-3.5 py-2.5 text-sm text-[#2a231c] placeholder:text-[#a39a8d] outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20';
 const labelClass = 'mb-1.5 flex items-center gap-1.5 text-[13px] font-medium text-[#4a4038]';
 
-const SOURCE_LABEL: Record<'wikidata' | 'aic' | 'met' | 'mmca' | 'pompidou' | 'nationalgallery', string> = {
+const SOURCE_LABEL: Record<'wikidata' | 'aic' | 'met' | 'mmca' | 'pompidou' | 'nationalgallery' | 'tate', string> = {
   wikidata: 'Wikidata',
   aic: '시카고',
   met: 'Met',
   mmca: '국현',
   pompidou: '퐁피두',
   nationalgallery: '내셔널갤러리',
+  tate: '테이트모던',
 };
-const SOURCE_BADGE: Record<'wikidata' | 'aic' | 'met' | 'mmca' | 'pompidou' | 'nationalgallery', string> = {
+const SOURCE_BADGE: Record<'wikidata' | 'aic' | 'met' | 'mmca' | 'pompidou' | 'nationalgallery' | 'tate', string> = {
   wikidata: 'bg-teal/15 text-teal',
   aic: 'bg-accent/15 text-accent-strong',
   met: 'bg-gold/15 text-gold',
   mmca: 'bg-red-500/15 text-red-600',
   pompidou: 'bg-indigo-500/15 text-indigo-600',
   nationalgallery: 'bg-emerald-500/15 text-emerald-600',
+  tate: 'bg-sky-500/15 text-sky-600',
 };
 
 interface QuickArtworkEntry {
@@ -301,16 +304,18 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
         setWikidataId('');
         applyArtistName(detail.artistName);
       } else {
-        const ENDPOINTS: Record<'aic' | 'met' | 'pompidou' | 'nationalgallery', string> = {
+        const ENDPOINTS: Record<'aic' | 'met' | 'pompidou' | 'nationalgallery' | 'tate', string> = {
           aic: 'aic',
           met: 'met',
           pompidou: 'pompidou',
           nationalgallery: 'nationalgallery',
+          tate: 'tate',
         };
-        const endpoint = `/api/${ENDPOINTS[item.source as 'aic' | 'met' | 'pompidou' | 'nationalgallery']}/artwork/${item.id}`;
+        const endpoint = `/api/${ENDPOINTS[item.source as 'aic' | 'met' | 'pompidou' | 'nationalgallery' | 'tate']}/artwork/${item.id}`;
         const res = await fetch(endpoint);
         if (!res.ok) throw new Error('작품 정보를 가져오지 못했습니다.');
-        const detail: AicArtworkDetail | MetArtworkDetail | PompidouArtworkDetail | NationalGalleryArtworkDetail = await res.json();
+        const detail: AicArtworkDetail | MetArtworkDetail | PompidouArtworkDetail | NationalGalleryArtworkDetail | TateArtworkDetail =
+          await res.json();
 
         setTitle(detail.title || item.label);
         setYear(detail.year != null ? String(detail.year) : '');
@@ -590,7 +595,7 @@ export function ArtworkModal({ artworkId, onClose, onSaved, onDeleted }: Artwork
                 <div className="rounded-xl border border-teal/25 bg-teal/[0.06] p-3.5">
                   <label className={labelClass}>
                     <Search className="h-3.5 w-3.5 text-teal" strokeWidth={2.25} />
-                    통합 검색 — Wikidata · 국립현대미술관 · 시카고 미술관 · 메트로폴리탄 미술관 · 퐁피두 센터 · 내셔널 갤러리(런던) (이름/작가/연도/소장처/이미지 자동 입력)
+                    통합 검색 — Wikidata · 국립현대미술관 · 시카고 미술관 · 메트로폴리탄 미술관 · 퐁피두 센터 · 내셔널 갤러리(런던) · 테이트모던 (이름/작가/연도/소장처/이미지 자동 입력)
                   </label>
                   <div className="flex gap-2">
                     <input

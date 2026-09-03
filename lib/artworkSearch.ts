@@ -1,10 +1,9 @@
 // 작품 통합 검색: Wikidata + 시카고 미술관(AIC) + 메트로폴리탄 미술관(Met) + 국립현대미술관(MMCA)
-// + 퐁피두 센터 + 내셔널 갤러리(런던)를 동시에 검색해 하나의 표준 표기 목록으로 합친다.
+// + 퐁피두 센터 + 내셔널 갤러리(런던) + 테이트모던을 동시에 검색해 하나의 표준 표기 목록으로 합친다.
 //
-// 루브르 박물관과 테이트모던은 자체 검색을 프로그램으로 호출할 방법이 없어 뺐다.
-// 루브르는 소장품 ID를 알면 상세 조회는 되지만 검색 페이지 자체가 봇 차단(429)에
-// 막혀 있고, 테이트는 실시간 검색 API가 없고 2014년 기준 정적 데이터셋만 있어
-// 이 통합 검색과 같은 방식으로 붙이기 어렵다.
+// 루브르 박물관은 자체 검색을 프로그램으로 호출할 방법이 없어 뺐다 — 소장품 ID를 알면
+// 상세 조회는 되지만 검색 페이지 자체가 봇 차단(429)에 막혀 있다. 테이트모던은 실시간
+// 검색 API가 없어 lib/tate.ts에서 정적 오픈데이터를 대신 쓴다.
 
 import { searchArtworks as searchWikidataArtworks } from './wikidata';
 import { searchAicArtworks } from './aic';
@@ -12,8 +11,9 @@ import { searchMetArtworks } from './met';
 import { searchMmcaArtworks } from './mmca';
 import { searchPompidouArtworks } from './pompidou';
 import { searchNationalGalleryArtworks } from './nationalgallery';
+import { searchTateArtworks } from './tate';
 
-export type ArtworkSource = 'wikidata' | 'aic' | 'met' | 'mmca' | 'pompidou' | 'nationalgallery';
+export type ArtworkSource = 'wikidata' | 'aic' | 'met' | 'mmca' | 'pompidou' | 'nationalgallery' | 'tate';
 
 export interface UnifiedArtworkSearchItem {
   source: ArtworkSource;
@@ -51,5 +51,10 @@ export async function searchAllArtworkSources(query: string): Promise<UnifiedArt
   if (nationalgallery.status === 'fulfilled') {
     items.push(...nationalgallery.value.map((i) => ({ source: 'nationalgallery' as const, id: String(i.id), label: i.label, description: i.description })));
   }
+
+  // 테이트모던은 네트워크 호출 없이 미리 정리해 둔 정적 데이터에서 바로 검색한다.
+  const tate = searchTateArtworks(query, 5);
+  items.push(...tate.map((i) => ({ source: 'tate' as const, id: i.id, label: i.label, description: i.description })));
+
   return items;
 }
