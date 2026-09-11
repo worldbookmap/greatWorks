@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   CalendarRange,
-  Globe2,
   Images,
+  Landmark,
   Loader2,
   Map,
   User,
@@ -57,9 +57,9 @@ export default function Home() {
     };
   }, []);
 
-  const { decadeCount, eraRange, countryCount } = useMemo(() => {
+  const { decadeCount, eraRange, venueCount } = useMemo(() => {
     const decades = new Set<number>();
-    const countries = new Set<string>();
+    const venues = new Set<string>();
     let min: number | null = null;
     let max: number | null = null;
 
@@ -70,13 +70,13 @@ export default function Home() {
         min = min == null ? decade : Math.min(min, decade);
         max = max == null ? decade : Math.max(max, decade);
       }
-      if (art.collection_country) countries.add(art.collection_country);
+      if (art.collection_name) venues.add(art.collection_name);
     }
 
     return {
       decadeCount: decades.size,
       eraRange: min != null && max != null ? `${decadeLabel(min)} ~ ${decadeLabel(max)}` : null,
-      countryCount: countries.size,
+      venueCount: venues.size,
     };
   }, [artworks]);
 
@@ -84,7 +84,7 @@ export default function Home() {
     { key: 'artworks', label: '작품', value: artworks.length, icon: Images },
     { key: 'artists', label: '화가', value: artists.length, icon: User },
     { key: 'eras', label: '시대', value: decadeCount, hint: eraRange ?? undefined, icon: CalendarRange },
-    { key: 'countries', label: '소장 국가', value: countryCount, icon: Globe2 },
+    { key: 'venues', label: '소장처', value: venueCount, icon: Landmark },
   ];
 
   return (
