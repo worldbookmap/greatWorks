@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { ImageOff, LayoutGrid, List, Palette, Plus, Search } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Globe2, ImageOff, LayoutGrid, List, Palette, Plus, Search, User } from 'lucide-react';
 import type { Artwork } from '@/lib/types';
 import { Pagination } from '@/components/ui/Pagination';
 import { RemoteThumbnail } from '@/components/ui/RemoteThumbnail';
@@ -12,6 +12,49 @@ type ViewMode = 'grid' | 'list';
 const VIEW_MODE_KEY = 'artworks-view-mode';
 const PAGE_SIZE = 15;
 
+type GroupKey = 'movement' | 'nationality' | 'artist';
+
+const GROUP_OPTIONS: { key: GroupKey; label: string; unknownLabel: string; icon: typeof Palette; getKey: (art: Artwork) => string }[] = [
+  { key: 'movement', label: '사조', unknownLabel: '사조 미상', icon: Palette, getKey: (art) => art.artist?.movement?.trim() ?? '' },
+  { key: 'nationality', label: '국가', unknownLabel: '국가 미상', icon: Globe2, getKey: (art) => art.artist?.nationality?.trim() ?? '' },
+  { key: 'artist', label: '화가', unknownLabel: '작가 미상', icon: User, getKey: (art) => art.artist?.name?.trim() ?? '' },
+];
+
+interface GroupSection {
+  key: string;
+  label: string;
+  artworks: Artwork[];
+}
+
+function ArtworkGridCard({ art, onClick }: { art: Artwork; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="group flex flex-col overflow-hidden rounded-2xl border border-black/[0.07] bg-surface text-left shadow-sm shadow-black/[0.03] transition hover:shadow-lg hover:shadow-black/[0.08] active:scale-[0.97]"
+    >
+      <div className="relative flex aspect-[4/5] items-center justify-center overflow-hidden bg-black/[0.03]">
+        {art.image_url ? (
+          <RemoteThumbnail
+            src={art.image_url}
+            alt=""
+            sizes="(min-width: 1024px) 22vw, (min-width: 640px) 30vw, 45vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+          />
+        ) : (
+          <ImageOff className="h-6 w-6 text-[#c9beae]" strokeWidth={1.5} />
+        )}
+      </div>
+      <div className="p-3">
+        <p className="truncate font-serif text-[14.5px] font-semibold tracking-normal text-[#2a231c]">{art.title}</p>
+        <p className="mt-0.5 truncate text-[12px] text-[#8a8074]">
+          {art.artist?.name ?? '작가 미상'}
+          {art.year != null && ` · ${art.year}`}
+        </p>
+      </div>
+    </button>
+  );
+}
+
 export function ArtworksView() {
   const [artworks, setArtworks] = useState<Artwork[]>([]);
   const [search, setSearch] = useState('');
@@ -20,6 +63,7 @@ export function ArtworksView() {
   const [editState, setEditState] = useState<{ artworkId?: string } | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [page, setPage] = useState(1);
+  const [groupBy, setGroupBy] = useState<GroupKey | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch('/api/artworks' + (search ? `?q=${encodeURIComponent(search)}` : ''));
@@ -48,6 +92,34 @@ export function ArtworksView() {
     localStorage.setItem(VIEW_MODE_KEY, mode);
   }
 
+  const activeGroupOption = GROUP_OPTIONS.find((option) => option.key === groupBy) ?? null;
+
+  const groupedSections: GroupSection[] | null = useMemo(() => {
+    if (!activeGroupOption) return null;
+
+    const map = new Map<string, Artwork[]>();
+    for (const art of artworks) {
+      const key = activeGroupOption.getKey(art) || activeGroupOption.unknownLabel;
+      const list = map.get(key);
+      if (list) list.push(art);
+      else map.set(key, [art]);
+    }
+
+    const sortArtworks = (list: Artwork[]) => [...list].sort((a, b) => a.title.localeCompare(b.title, 'ko'));
+
+    const sections = Array.from(map.entries())
+      .filter(([key]) => key !== activeGroupOption.unknownLabel)
+      .sort(([a], [b]) => a.localeCompare(b, 'ko'))
+      .map(([key, list]) => ({ key, label: key, artworks: sortArtworks(list) }));
+
+    const unknown = map.get(activeGroupOption.unknownLabel);
+    if (unknown) {
+      sections.push({ key: activeGroupOption.unknownLabel, label: activeGroupOption.unknownLabel, artworks: sortArtworks(unknown) });
+    }
+
+    return sections;
+  }, [artworks, activeGroupOption]);
+
   return (
     <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
       <div className="mb-6 flex items-center gap-2">
@@ -60,25 +132,48 @@ export function ArtworksView() {
             className="w-full rounded-xl border border-black/[0.08] bg-surface py-2.5 pl-10 pr-3.5 text-sm text-[#2a231c] placeholder:text-[#a39a8d] outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
           />
         </div>
+        {!activeGroupOption && (
+          <div className="flex shrink-0 items-center gap-0.5 rounded-xl border border-black/[0.08] bg-surface p-1">
+            <button
+              onClick={() => handleSetViewMode('grid')}
+              aria-label="카드형 보기"
+              className={`flex h-8 w-8 items-center justify-center rounded-lg transition active:scale-[0.94] ${
+                viewMode === 'grid' ? 'bg-black/[0.06] text-[#2a231c]' : 'text-[#a39a8d] hover:text-[#4a4038]'
+              }`}
+            >
+              <LayoutGrid className="h-4 w-4" strokeWidth={2.25} />
+            </button>
+            <button
+              onClick={() => handleSetViewMode('list')}
+              aria-label="목록형 보기"
+              className={`flex h-8 w-8 items-center justify-center rounded-lg transition active:scale-[0.94] ${
+                viewMode === 'list' ? 'bg-black/[0.06] text-[#2a231c]' : 'text-[#a39a8d] hover:text-[#4a4038]'
+              }`}
+            >
+              <List className="h-4 w-4" strokeWidth={2.25} />
+            </button>
+          </div>
+        )}
         <div className="flex shrink-0 items-center gap-0.5 rounded-xl border border-black/[0.08] bg-surface p-1">
-          <button
-            onClick={() => handleSetViewMode('grid')}
-            aria-label="카드형 보기"
-            className={`flex h-8 w-8 items-center justify-center rounded-lg transition active:scale-[0.94] ${
-              viewMode === 'grid' ? 'bg-black/[0.06] text-[#2a231c]' : 'text-[#a39a8d] hover:text-[#4a4038]'
-            }`}
-          >
-            <LayoutGrid className="h-4 w-4" strokeWidth={2.25} />
-          </button>
-          <button
-            onClick={() => handleSetViewMode('list')}
-            aria-label="목록형 보기"
-            className={`flex h-8 w-8 items-center justify-center rounded-lg transition active:scale-[0.94] ${
-              viewMode === 'list' ? 'bg-black/[0.06] text-[#2a231c]' : 'text-[#a39a8d] hover:text-[#4a4038]'
-            }`}
-          >
-            <List className="h-4 w-4" strokeWidth={2.25} />
-          </button>
+          {GROUP_OPTIONS.map((option) => {
+            const Icon = option.icon;
+            const active = groupBy === option.key;
+            return (
+              <button
+                key={option.key}
+                onClick={() => setGroupBy(active ? null : option.key)}
+                aria-label={`${option.label}로 구분해 보기`}
+                aria-pressed={active}
+                title={`${option.label}로 구분해 보기`}
+                className={`flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12.5px] font-medium transition active:scale-[0.94] ${
+                  active ? 'bg-black/[0.06] text-[#2a231c]' : 'text-[#a39a8d] hover:text-[#4a4038]'
+                }`}
+              >
+                <Icon className="h-4 w-4" strokeWidth={2.25} />
+                <span className="hidden sm:inline">{option.label}</span>
+              </button>
+            );
+          })}
         </div>
         <button
           onClick={() => setEditState({})}
@@ -94,34 +189,26 @@ export function ArtworksView() {
           <Palette className="h-8 w-8 text-[#c9beae]" strokeWidth={1.5} />
           <p className="text-sm text-[#8a8074]">등록된 작품이 없습니다.</p>
         </div>
+      ) : groupedSections ? (
+        <div className="space-y-8">
+          {groupedSections.map((section) => (
+            <section key={section.key}>
+              <h2 className="mb-3 flex items-baseline gap-2 border-b border-black/[0.06] pb-2">
+                <span className="font-serif text-[16px] font-semibold tracking-normal text-[#2a231c]">{section.label}</span>
+                <span className="text-[12px] text-[#8a8074]">{section.artworks.length}점</span>
+              </h2>
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                {section.artworks.map((art) => (
+                  <ArtworkGridCard key={art.id} art={art} onClick={() => setDetailArtworkId(art.id)} />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {pagedArtworks.map((art) => (
-            <button
-              key={art.id}
-              onClick={() => setDetailArtworkId(art.id)}
-              className="group flex flex-col overflow-hidden rounded-2xl border border-black/[0.07] bg-surface text-left shadow-sm shadow-black/[0.03] transition hover:shadow-lg hover:shadow-black/[0.08] active:scale-[0.97]"
-            >
-              <div className="relative flex aspect-[4/5] items-center justify-center overflow-hidden bg-black/[0.03]">
-                {art.image_url ? (
-                  <RemoteThumbnail
-                    src={art.image_url}
-                    alt=""
-                    sizes="(min-width: 1024px) 22vw, (min-width: 640px) 30vw, 45vw"
-                    className="object-cover transition-transform duration-300 group-hover:scale-[1.04]"
-                  />
-                ) : (
-                  <ImageOff className="h-6 w-6 text-[#c9beae]" strokeWidth={1.5} />
-                )}
-              </div>
-              <div className="p-3">
-                <p className="truncate font-serif text-[14.5px] font-semibold tracking-normal text-[#2a231c]">{art.title}</p>
-                <p className="mt-0.5 truncate text-[12px] text-[#8a8074]">
-                  {art.artist?.name ?? '작가 미상'}
-                  {art.year != null && ` · ${art.year}`}
-                </p>
-              </div>
-            </button>
+            <ArtworkGridCard key={art.id} art={art} onClick={() => setDetailArtworkId(art.id)} />
           ))}
         </div>
       ) : (
@@ -151,7 +238,7 @@ export function ArtworksView() {
         </div>
       )}
 
-      <Pagination page={currentPage} totalPages={totalPages} onChange={setPage} />
+      {!groupedSections && <Pagination page={currentPage} totalPages={totalPages} onChange={setPage} />}
 
       {detailArtworkId && (
         <ArtworkDetailModal
