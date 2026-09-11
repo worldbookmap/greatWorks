@@ -55,6 +55,49 @@ function ArtworkGridCard({ art, onClick }: { art: Artwork; onClick: () => void }
   );
 }
 
+function ArtworkListRow({ art, onClick }: { art: Artwork; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-3 rounded-xl border border-black/[0.07] bg-surface p-2.5 text-left shadow-sm shadow-black/[0.03] transition hover:shadow-lg hover:shadow-black/[0.08] active:scale-[0.97]"
+    >
+      <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-black/[0.03]">
+        {art.image_url ? (
+          <RemoteThumbnail src={art.image_url} alt="" sizes="56px" className="object-cover" />
+        ) : (
+          <ImageOff className="h-4 w-4 text-[#c9beae]" strokeWidth={1.5} />
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-serif text-[14.5px] font-semibold tracking-normal text-[#2a231c]">{art.title}</p>
+        <p className="mt-0.5 truncate text-[12px] text-[#8a8074]">
+          {art.artist?.name ?? '작가 미상'}
+          {art.year != null && ` · ${art.year}`}
+        </p>
+      </div>
+    </button>
+  );
+}
+
+function ArtworkCollection({ artworks, viewMode, onSelect }: { artworks: Artwork[]; viewMode: ViewMode; onSelect: (id: string) => void }) {
+  if (viewMode === 'grid') {
+    return (
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        {artworks.map((art) => (
+          <ArtworkGridCard key={art.id} art={art} onClick={() => onSelect(art.id)} />
+        ))}
+      </div>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-2">
+      {artworks.map((art) => (
+        <ArtworkListRow key={art.id} art={art} onClick={() => onSelect(art.id)} />
+      ))}
+    </div>
+  );
+}
+
 export function ArtworksView() {
   const [artworks, setArtworks] = useState<Artwork[]>([]);
   const [search, setSearch] = useState('');
@@ -132,28 +175,26 @@ export function ArtworksView() {
             className="w-full rounded-xl border border-black/[0.08] bg-surface py-2.5 pl-10 pr-3.5 text-sm text-[#2a231c] placeholder:text-[#a39a8d] outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
           />
         </div>
-        {!activeGroupOption && (
-          <div className="flex shrink-0 items-center gap-0.5 rounded-xl border border-black/[0.08] bg-surface p-1">
-            <button
-              onClick={() => handleSetViewMode('grid')}
-              aria-label="카드형 보기"
-              className={`flex h-8 w-8 items-center justify-center rounded-lg transition active:scale-[0.94] ${
-                viewMode === 'grid' ? 'bg-black/[0.06] text-[#2a231c]' : 'text-[#a39a8d] hover:text-[#4a4038]'
-              }`}
-            >
-              <LayoutGrid className="h-4 w-4" strokeWidth={2.25} />
-            </button>
-            <button
-              onClick={() => handleSetViewMode('list')}
-              aria-label="목록형 보기"
-              className={`flex h-8 w-8 items-center justify-center rounded-lg transition active:scale-[0.94] ${
-                viewMode === 'list' ? 'bg-black/[0.06] text-[#2a231c]' : 'text-[#a39a8d] hover:text-[#4a4038]'
-              }`}
-            >
-              <List className="h-4 w-4" strokeWidth={2.25} />
-            </button>
-          </div>
-        )}
+        <div className="flex shrink-0 items-center gap-0.5 rounded-xl border border-black/[0.08] bg-surface p-1">
+          <button
+            onClick={() => handleSetViewMode('grid')}
+            aria-label="카드형 보기"
+            className={`flex h-8 w-8 items-center justify-center rounded-lg transition active:scale-[0.94] ${
+              viewMode === 'grid' ? 'bg-black/[0.06] text-[#2a231c]' : 'text-[#a39a8d] hover:text-[#4a4038]'
+            }`}
+          >
+            <LayoutGrid className="h-4 w-4" strokeWidth={2.25} />
+          </button>
+          <button
+            onClick={() => handleSetViewMode('list')}
+            aria-label="목록형 보기"
+            className={`flex h-8 w-8 items-center justify-center rounded-lg transition active:scale-[0.94] ${
+              viewMode === 'list' ? 'bg-black/[0.06] text-[#2a231c]' : 'text-[#a39a8d] hover:text-[#4a4038]'
+            }`}
+          >
+            <List className="h-4 w-4" strokeWidth={2.25} />
+          </button>
+        </div>
         <div className="flex shrink-0 items-center gap-0.5 rounded-xl border border-black/[0.08] bg-surface p-1">
           {GROUP_OPTIONS.map((option) => {
             const Icon = option.icon;
@@ -197,45 +238,12 @@ export function ArtworksView() {
                 <span className="font-serif text-[16px] font-semibold tracking-normal text-[#2a231c]">{section.label}</span>
                 <span className="text-[12px] text-[#8a8074]">{section.artworks.length}점</span>
               </h2>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                {section.artworks.map((art) => (
-                  <ArtworkGridCard key={art.id} art={art} onClick={() => setDetailArtworkId(art.id)} />
-                ))}
-              </div>
+              <ArtworkCollection artworks={section.artworks} viewMode={viewMode} onSelect={setDetailArtworkId} />
             </section>
           ))}
         </div>
-      ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {pagedArtworks.map((art) => (
-            <ArtworkGridCard key={art.id} art={art} onClick={() => setDetailArtworkId(art.id)} />
-          ))}
-        </div>
       ) : (
-        <div className="flex flex-col gap-2">
-          {pagedArtworks.map((art) => (
-            <button
-              key={art.id}
-              onClick={() => setDetailArtworkId(art.id)}
-              className="flex items-center gap-3 rounded-xl border border-black/[0.07] bg-surface p-2.5 text-left shadow-sm shadow-black/[0.03] transition hover:shadow-lg hover:shadow-black/[0.08] active:scale-[0.97]"
-            >
-              <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-black/[0.03]">
-                {art.image_url ? (
-                  <RemoteThumbnail src={art.image_url} alt="" sizes="56px" className="object-cover" />
-                ) : (
-                  <ImageOff className="h-4 w-4 text-[#c9beae]" strokeWidth={1.5} />
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-serif text-[14.5px] font-semibold tracking-normal text-[#2a231c]">{art.title}</p>
-                <p className="mt-0.5 truncate text-[12px] text-[#8a8074]">
-                  {art.artist?.name ?? '작가 미상'}
-                  {art.year != null && ` · ${art.year}`}
-                </p>
-              </div>
-            </button>
-          ))}
-        </div>
+        <ArtworkCollection artworks={pagedArtworks} viewMode={viewMode} onSelect={setDetailArtworkId} />
       )}
 
       {!groupedSections && <Pagination page={currentPage} totalPages={totalPages} onChange={setPage} />}
