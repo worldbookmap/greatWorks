@@ -118,3 +118,31 @@ as $$
     )
   );
 $$;
+
+-- 실제로 작품을 보고 남기는 감상 기록 (한 작품을 여러 번 볼 수 있으므로 여러 건 저장)
+create table if not exists artwork_viewings (
+  id uuid primary key default gen_random_uuid(),
+  artwork_id uuid not null references artworks(id) on delete cascade,
+  viewed_on date, -- 관람일
+  place text not null default '', -- 관람 장소 (예: 루브르 박물관, 특별전 이름)
+  review text not null default '', -- 감상평
+  photo_urls text[] not null default '{}', -- 직접 찍은 사진
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists artwork_viewings_artwork_id_idx on artwork_viewings(artwork_id);
+
+-- 전시회 후기 (주요 사진은 최대 10장, 첫 장이 대표 사진)
+create table if not exists exhibition_reviews (
+  id uuid primary key default gen_random_uuid(),
+  title text not null, -- 전시회 타이틀
+  venue text not null default '', -- 장소
+  visited_on date, -- 관람일
+  review text not null default '', -- 감상
+  photo_urls text[] not null default '{}' check (cardinality(photo_urls) <= 10),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists exhibition_reviews_visited_on_idx on exhibition_reviews(visited_on desc);

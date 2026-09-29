@@ -7,7 +7,7 @@ import {
   Images,
   Landmark,
   Loader2,
-  Map,
+  Ticket,
   User,
   Waypoints,
 } from 'lucide-react';
@@ -25,8 +25,8 @@ const QUICK_LINKS = [
   { href: '/artworks', label: '작품 둘러보기', icon: Images },
   { href: '/artists', label: '화가 둘러보기', icon: User },
   { href: '/era', label: '연대로 보기', icon: CalendarRange },
-  { href: '/map', label: '지도로 보기', icon: Map },
   { href: '/mindmap', label: '인물관계 보기', icon: Waypoints },
+  { href: '/exhibitions', label: '전시회 후기', icon: Ticket },
 ];
 
 function decadeLabel(decade: number) {

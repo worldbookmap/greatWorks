@@ -7,15 +7,27 @@ type Params = { params: Promise<{ id: string }> };
 export async function GET(_request: NextRequest, { params }: Params) {
   const { id } = await params;
 
-  const [{ data: artwork, error: artworkError }, { data: annotations, error: annotationsError }] = await Promise.all([
+  const [
+    { data: artwork, error: artworkError },
+    { data: annotations, error: annotationsError },
+    { data: viewings, error: viewingsError },
+  ] = await Promise.all([
     supabase.from('artworks').select('*, artist:artists(*)').eq('id', id).single(),
     supabase.from('annotations').select('*').eq('artwork_id', id).order('created_at', { ascending: true }),
+    supabase
+      .from('artwork_viewings')
+      .select('*')
+      .eq('artwork_id', id)
+      .order('viewed_on', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false }),
   ]);
 
   if (artworkError) return NextResponse.json({ error: artworkError.message }, { status: 404 });
   if (annotationsError) return NextResponse.json({ error: annotationsError.message }, { status: 500 });
+  // 감상 기록 테이블이 아직 없더라도(스키마 미적용) 작품 정보는 볼 수 있게 에러를 무시합니다.
+  if (viewingsError) console.error('artwork_viewings 조회 실패:', viewingsError.message);
 
-  return NextResponse.json({ ...artwork, annotations: annotations ?? [] });
+  return NextResponse.json({ ...artwork, annotations: annotations ?? [], viewings: viewings ?? [] });
 }
 
 export async function PATCH(request: NextRequest, { params }: Params) {

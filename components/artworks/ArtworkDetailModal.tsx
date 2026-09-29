@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Eye, EyeOff, ImageOff, Palette, Pencil, Trash2, X } from 'lucide-react';
 import type { ArtworkDetail } from '@/lib/types';
 import { AnnotationLayer } from './AnnotationLayer';
+import { ArtworkViewings } from './ArtworkViewings';
 
 interface ArtworkDetailModalProps {
   artworkId: string;
@@ -27,6 +28,7 @@ export function ArtworkDetailModal({ artworkId, onClose, onEdit, onDeleted }: Ar
   const [artwork, setArtwork] = useState<ArtworkDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [showHotspots, setShowHotspots] = useState(true);
+  const [tab, setTab] = useState<'info' | 'viewings'>('info');
 
   useEffect(() => {
     setLoading(true);
@@ -98,9 +100,46 @@ export function ArtworkDetailModal({ artworkId, onClose, onEdit, onDeleted }: Ar
           </button>
         </div>
 
+        {!loading && artwork && (
+          <div role="tablist" className="flex shrink-0 gap-1 border-b border-black/[0.06] px-4 sm:px-6">
+            {(
+              [
+                ['info', '작품 정보'],
+                ['viewings', '실제 작품 감상'],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                role="tab"
+                aria-selected={tab === key}
+                onClick={() => setTab(key)}
+                className={`relative -mb-px flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-[13.5px] font-medium transition ${
+                  tab === key
+                    ? 'border-accent-strong text-[#2a231c]'
+                    : 'border-transparent text-[#8a8074] hover:text-[#4a4038]'
+                }`}
+              >
+                {label}
+                {key === 'viewings' && artwork.viewings.length > 0 && (
+                  <span className="rounded-full bg-accent/15 px-1.5 text-[11px] font-semibold text-accent-strong">
+                    {artwork.viewings.length}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5">
           {loading || !artwork ? (
             <p className="text-sm text-[#6b6258]">불러오는 중...</p>
+          ) : tab === 'viewings' ? (
+            <ArtworkViewings
+              artworkId={artwork.id}
+              defaultPlace={artwork.collection_name}
+              viewings={artwork.viewings}
+              onChange={(viewings) => setArtwork((prev) => (prev ? { ...prev, viewings } : prev))}
+            />
           ) : (
             <div className="space-y-4">
               {artwork.image_url ? (
@@ -146,7 +185,7 @@ export function ArtworkDetailModal({ artworkId, onClose, onEdit, onDeleted }: Ar
           )}
         </div>
 
-        {!loading && artwork && (
+        {!loading && artwork && tab === 'info' && (
           <div className="flex shrink-0 gap-2 border-t border-black/[0.06] px-4 sm:px-6 py-4">
             <button
               onClick={onEdit}

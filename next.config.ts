@@ -1,8 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Allow local dev access via 127.0.0.1 as well as localhost.
-  allowedDevOrigins: ["127.0.0.1"],
+  // Allow local dev access via 127.0.0.1 as well as localhost,
+  // and from phones on the same Wi-Fi (e.g. http://192.168.x.x:3000).
+  allowedDevOrigins: ["127.0.0.1", "192.168.*.*"],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "commons.wikimedia.org" },

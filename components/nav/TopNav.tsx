@@ -2,14 +2,15 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { CalendarRange, Images, Map, Palette, User, Waypoints } from 'lucide-react';
+import { CalendarRange, Images, Palette, Ticket, User, Waypoints } from 'lucide-react';
 
 const TABS = [
   { href: '/artworks', label: '작품', icon: Images },
   { href: '/artists', label: '화가', icon: User },
   { href: '/era', label: '연대', icon: CalendarRange },
-  { href: '/map', label: '지도', icon: Map },
   { href: '/mindmap', label: '인물관계', icon: Waypoints },
+  // 지도(/map) 탭은 숨김 처리. 페이지는 남아 있어 주소로 직접 들어갈 수는 있습니다.
+  { href: '/exhibitions', label: '전시회 후기', icon: Ticket },
 ];
 
 export function TopNav() {

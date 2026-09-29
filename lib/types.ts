@@ -92,8 +92,33 @@ export interface Annotation {
   created_at: string;
 }
 
+export interface ArtworkViewing {
+  id: string;
+  artwork_id: string;
+  viewed_on: string | null; // YYYY-MM-DD
+  place: string;
+  review: string;
+  photo_urls: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ExhibitionReview {
+  id: string;
+  title: string; // 전시회 타이틀
+  venue: string; // 장소
+  visited_on: string | null; // 관람일 YYYY-MM-DD
+  review: string; // 감상
+  photo_urls: string[]; // 주요 사진 (최대 10장, 첫 장이 대표 사진)
+  created_at: string;
+  updated_at: string;
+}
+
+export const MAX_EXHIBITION_PHOTOS = 10;
+
 export interface ArtworkDetail extends Artwork {
   annotations: Annotation[];
+  viewings: ArtworkViewing[];
 }
 
 export interface MindmapNode {
